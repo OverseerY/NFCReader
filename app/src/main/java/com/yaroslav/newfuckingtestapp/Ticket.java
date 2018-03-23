@@ -1,6 +1,8 @@
 package com.yaroslav.newfuckingtestapp;
 
-public class Ticket {
+import java.io.Serializable;
+
+public class Ticket implements Serializable{
     private String mDescription;
     private String mLatitude;
     private String mLongitude;
@@ -14,6 +16,16 @@ public class Ticket {
         this.mLongitude = longitude;
         this.mTime = time;
         this.mImei = imei;
+    }
+    public Ticket(String description, String time) {
+        this.mDescription = description;
+        this.mTime = time;
+    }
+
+
+    @Override
+    public String toString() {
+        return mDescription + "; " + mTime;
     }
 
     public void setmDescription(String value) {

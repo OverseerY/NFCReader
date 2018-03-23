@@ -6,11 +6,19 @@
     <string name="warning">Warning!</string>
     <string name="settings">Settings</string>
     <string name="failure">Failure</string>
+    <string name="error">Error!</string>
+    <string name="empy_obj">Object is nul</string>
     <string name="hint_name">Tag name:</string>
     <string name="hint_time">Time when tag was read:</string>
+    <string name="file_written">File has been written</string>
+    <string name="file_not_written">Failed to save data</string>
+    <string name="data_restored">Data restored</string>
+    <string name="restore_failed">Failed to restore data</string>
+    <string name="file_deleted">File deleted</string>
+    <string name="file_did_not_deleted">Failed to delete file</string>
     <string name="nfc_notification">Unable to read tag. NFC adapter is not reachable</string>
     <string name="tag_success">Tag was read successfully!</string>
-    <string name="tag_failure">Tag was not recognised. Please, close this message and try again</string>
+    <string name="tag_failure">Tag was not recognised. Try again</string>
     <string name="tag_unknown">Tag name is unknown. Try again or skip it</string>
     <string name="nfc_disabled">NFC adapter is disabled or does not exist. Please, check settings and try again</string>
     <string name="gps_disabled">GPS adapter is disabled or does not exist. Please, check settings and try again</string>
@@ -19,7 +27,11 @@
     <string name="provider_failure">Network provider does not exist</string>
     <string name="location_permission_required">Application requests access to get location while user scanning tags</string>
     <string name="imei_permission_required">Application requests access to get IMEI of the device to use it as unique identifier of user</string>
+    <string name="write_permission_required">Application requests access to write file with readed tags on the External Storage</string>
+    <string name="read_permission_required">Application requests access to read files from the External Storage</string>
     <string name="permission_denied">Unfortunately, permission denied. Application may work not properly</string>
     <string name="permission_granted">Permission is granted</string>
     <string name="location_is_null">Tag was read successfully, but location is not reachable</string>
+    <string name="list_empty">List of objects is empty</string>
+    <string name="file_empty">File empty or does not exist</string>
 </resources>

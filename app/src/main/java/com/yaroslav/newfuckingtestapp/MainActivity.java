@@ -24,6 +24,7 @@ import android.nfc.tech.NfcA;
 import android.nfc.tech.NfcB;
 import android.nfc.tech.NfcV;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.os.Parcelable;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -35,6 +36,8 @@ import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.google.gson.GsonBuilder;
@@ -44,8 +47,14 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONException;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.URL;
@@ -58,6 +67,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -68,6 +79,8 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQUEST_LOCATION = 0;
     private static final int PERMISSION_REQUEST_IMEI = 0;
+    //private static final int PERMISSION_REQUEST_STORAGE_WRITE = 0;
+    //private static final int PERMISSION_REQUEST_STORAGE_READ = 0;
 
     private String currentTime;
     private String description;
@@ -83,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean isNfcDialogShown;
     private boolean isNetDialogShown;
 
-    private boolean isTagDialogShown;
+    //private static final String FILENAME = "tags_list.dat";
 
     TextView gps_result;
     TextView nfc_result;
@@ -95,6 +108,11 @@ public class MainActivity extends AppCompatActivity {
     NfcManager nfcManager;
     NfcAdapter nfcAdapter;
     ConnectivityManager connectivityManager;
+
+    ArrayAdapter<Ticket> adapter;
+    //ArrayList<Ticket> tickets = new ArrayList();
+    List<Ticket> points;
+    ListView listView;
 
     private final String[][] techList = new String[][] {
             new String[] {
@@ -123,24 +141,29 @@ public class MainActivity extends AppCompatActivity {
         isGpsDialogShown = false;
         isNfcDialogShown = false;
         isNetDialogShown = false;
-        isTagDialogShown = false;
 
         description = null;
         currentLatitude = null;
         currentLongitude = null;
         currentTime = null;
 
+        points = new ArrayList<>();
+        listView = (ListView) findViewById(R.id.list);
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, points);
+        listView.setAdapter(adapter);
+
         IMEI = null;
         IMEI = getImei();
+
+        openPoints();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+
         statusInit();
-
         initLocationProvider();
-
         listenForNfc();
     }
 
@@ -152,9 +175,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStop(){
+        super.onStop();
+        savePoints();
+    }
+
+    @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
         super.onSaveInstanceState(savedInstanceState);
-
+        //savedInstanceState.putStringArrayList("tickets", tickets);
     }
 
     private void listenForNfc() {
@@ -193,24 +222,28 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
             if (tag_data != "") {
-                if (!isTagDialogShown) {
-                    tagReadDialog(tag_data, getString(R.string.tag_success), getString(R.string.ok));
-                    description = tag_data;
-                    if (currentLatitude != null && currentLongitude != null) {
-                        new UploadJsonTask().execute();
+                description = tag_data;
+                if (currentLatitude != null && currentLongitude != null) {
+                    if (!isInternetEnabled) {
+                        //tickets.add(new Ticket(description, currentLatitude, currentLongitude, currentTime, IMEI));
+                        addPoint(description, converteTime(Long.parseLong(currentTime)));
+                        //customSnackbar("Tag <" + description + "> has been saved", getString(R.string.ok));
                     } else {
-                        customSnackbar(getString(R.string.location_is_null), getString(R.string.ok));
+                        //new UploadJsonTask().execute();
+                        addPoint(description, converteTime(Long.parseLong(currentTime))); /**TO DO: delete this row before release */
+                        //customSnackbar("Tag <" + description + "> has been sent", getString(R.string.ok));
                     }
+                } else {
+                    customSnackbar(getString(R.string.location_is_null), getString(R.string.ok));
                 }
+                autoCloseDialog(tag_data, getString(R.string.tag_success));
             } else {
-                if (!isTagDialogShown) {
-                    if (intent.getAction().equals(NfcAdapter.ACTION_TAG_DISCOVERED)) {
-                        String nfcid = ByteArrayToHexString(intent.getByteArrayExtra(NfcAdapter.EXTRA_ID));
-                        tag_id = nfcid;
-                        tagReadDialog(tag_id, getString(R.string.tag_unknown), getString(R.string.ok));
-                    } else {
-                        tagReadDialog(getString(R.string.failure), getString(R.string.tag_failure), getString(R.string.ok));
-                    }
+                if (intent.getAction().equals(NfcAdapter.ACTION_TAG_DISCOVERED)) {
+                    String nfcid = ByteArrayToHexString(intent.getByteArrayExtra(NfcAdapter.EXTRA_ID));
+                    tag_id = nfcid;
+                    autoCloseDialog(tag_id, getString(R.string.tag_unknown));
+                } else {
+                    autoCloseDialog(getString(R.string.failure), getString(R.string.tag_failure));
                 }
             }
         } else {
@@ -379,27 +412,11 @@ public class MainActivity extends AppCompatActivity {
 
     //================================================================================
 
-    public void tagReadDialog(String title, String message, String positiveButton) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(
-                MainActivity.this);
-        builder.setTitle(title);
-        builder.setMessage(message);
-        builder.setPositiveButton(positiveButton, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                isTagDialogShown = false;
-            }
-        });
-        builder.show();
-        isTagDialogShown = true;
-    }
-
     public void customSnackbar(String message, String button) {
         Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG)
                 .setAction(button, new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-
                     }
                 });
         snackbar.show();
@@ -412,7 +429,6 @@ public class MainActivity extends AppCompatActivity {
         public void onLocationChanged(Location location) {
             currentLatitude = location.convert(location.getLatitude(), location.FORMAT_DEGREES);
             currentLongitude = location.convert(location.getLongitude(), location.FORMAT_DEGREES);
-
             currentTime = String.valueOf(location.getTime());
         }
 
@@ -523,6 +539,22 @@ public class MainActivity extends AppCompatActivity {
                 Snackbar.make(findViewById(android.R.id.content), R.string.permission_denied, Snackbar.LENGTH_SHORT).show();
             }
         }
+        /*
+        if (requestCode == PERMISSION_REQUEST_STORAGE_WRITE) {
+            if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Snackbar.make(findViewById(android.R.id.content), R.string.permission_granted, Snackbar.LENGTH_SHORT).show();
+            } else {
+                Snackbar.make(findViewById(android.R.id.content), R.string.permission_denied, Snackbar.LENGTH_SHORT).show();
+            }
+        }
+        if (requestCode == PERMISSION_REQUEST_STORAGE_READ) {
+            if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Snackbar.make(findViewById(android.R.id.content), R.string.permission_granted, Snackbar.LENGTH_SHORT).show();
+            } else {
+                Snackbar.make(findViewById(android.R.id.content), R.string.permission_denied, Snackbar.LENGTH_SHORT).show();
+            }
+        }
+        */
     }
 
     public static void executeJson(String description, String latitude, String longitude, String time, String imei) {
@@ -562,11 +594,184 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private String converteTime() {
+    private String getCurTime() {
         DateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
         Date date = new Date();
         String formatted = format.format(date);
         return formatted;
+    }
+
+    private String converteTime(long value) {
+        DateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+        Date date = new Date(value);
+        String formatted = format.format(date);
+        return formatted;
+    }
+
+    //========================================================================================
+    /**
+    private void serializeThat() {
+        File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES);
+        File file = new File(path, "/" + FILENAME);
+        try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
+            Log.i(TAG, "serializeThat");
+            if (!tickets.isEmpty()) {
+                oos.writeObject(tickets);
+                customSnackbar(getString(R.string.file_written), getString(R.string.ok));
+            } else {
+                customSnackbar(getString(R.string.list_empty), getString(R.string.ok));
+            }
+        } catch (Exception e) {
+            Log.e("serializeThat", e.getLocalizedMessage());
+            autoCloseDialog(getString(R.string.error),e.getLocalizedMessage());
+            //tagReadDialog(getString(R.string.error),e.getLocalizedMessage(),getString(R.string.ok));
+        }
+    }
+
+
+    private void deserializeThat() {
+        ArrayList<Ticket> newtickets;
+        File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES);
+        File file = new File(path, "/" + FILENAME);
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+            newtickets = (ArrayList<Ticket>) ois.readObject();
+            for (Ticket t : newtickets) {
+                String temp = tag_info.getText().toString();
+                tag_info.setText(temp + "\n" + t.getmDescription() + "; " + converteTime(Long.parseLong(t.getmTime())) + "\n");
+            }
+        } catch (Exception e) {
+            Log.e("deserializeThat", e.getMessage());
+            autoCloseDialog(getString(R.string.error), e.getLocalizedMessage());
+            //tagReadDialog(getString(R.string.error), e.getLocalizedMessage(), getString(R.string.ok));
+        }
+    }
+
+
+    public void onClickWrite(View view) {
+        if (tickets != null) {
+            if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                serializeThat();
+            } else {
+                requestStorageWritePermissions();
+            }
+        } else {
+            customSnackbar(getString(R.string.empy_obj), getString(R.string.ok));
+        }
+    }
+    public void onClickRead(View view) {
+        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            try {
+                deserializeThat();
+            } catch (Exception e) {
+                Log.e("onClickRead", e.getLocalizedMessage());
+                //tagReadDialog(getString(R.string.error), getString(R.string.file_empty), getString(R.string.ok));
+                //autoCloseDialog(getString(R.string.error), getString(R.string.file_empty));
+                customSnackbar(getString(R.string.file_empty),getString(R.string.ok));
+            }
+        } else {
+           requestStorageReadPermissions();
+        }
+    }
+
+
+    private void requestStorageWritePermissions() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+            Snackbar.make(findViewById(android.R.id.content), R.string.write_permission_required, Snackbar.LENGTH_INDEFINITE).setAction(R.string.ok, new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_REQUEST_STORAGE_WRITE);
+                }
+            }).show();
+        } else {
+            Snackbar.make(findViewById(android.R.id.content), R.string.permission_denied, Snackbar.LENGTH_SHORT).show();
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_REQUEST_STORAGE_WRITE);
+        }
+    }
+
+    private void requestStorageReadPermissions() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+            Snackbar.make(findViewById(android.R.id.content), R.string.read_permission_required, Snackbar.LENGTH_INDEFINITE).setAction(R.string.ok, new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_STORAGE_READ);
+                }
+            }).show();
+        } else {
+            Snackbar.make(findViewById(android.R.id.content), R.string.permission_denied, Snackbar.LENGTH_SHORT).show();
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_STORAGE_READ);
+        }
+    }
+    */
+
+    public void autoCloseDialog(String title, String message) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(
+                MainActivity.this);
+        builder.setTitle(title);
+        builder.setMessage(message);
+        builder.setCancelable(true);
+
+
+        final AlertDialog closedialog = builder.create();
+
+        closedialog.show();
+
+        final Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                closedialog.dismiss();
+                timer.cancel();
+            }
+        }, 2000);
+
+    }
+
+    private void addPoint(String name, String time) {
+        Ticket point = new Ticket(name, time);
+        points.add(point);
+        adapter.notifyDataSetChanged();
+    }
+
+    private void savePoints() {
+        boolean result = JSONHelper.exportToJSON(this, points);
+        if (result) {
+            customSnackbar(getString(R.string.file_written), getString(R.string.ok));
+        } else {
+            customSnackbar(getString(R.string.file_not_written), getString(R.string.ok));
+        }
+    }
+
+    private void openPoints() {
+        points = JSONHelper.importFromJSON(this);
+        if (points != null) {
+            adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, points);
+            listView.setAdapter(adapter);
+            customSnackbar(getString(R.string.data_restored), getString(R.string.ok));
+        } else {
+            customSnackbar(getString(R.string.restore_failed), getString(R.string.ok));
+        }
+    }
+
+
+    private void deleteFile() {
+       boolean result = JSONHelper.deleteThisFuckingFile(this);
+        if (result) {
+            customSnackbar(getString(R.string.file_deleted), getString(R.string.ok));
+        } else {
+            customSnackbar(getString(R.string.file_did_not_deleted), getString(R.string.ok));
+        }
+    }
+
+    public void onClickSave(View view) {
+        savePoints();
+    }
+
+    public void onClickOpen(View view) {
+        openPoints();
+    }
+
+    public void onClickClear(View view) {
+        deleteFile();
     }
 }
 
