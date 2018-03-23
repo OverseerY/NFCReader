@@ -297,7 +297,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             if (connectivityManager.getActiveNetworkInfo() != null) {
                 try {
-                    netAddress = new NetTask().execute("http://points.temirtulpar.com").get();
+                    netAddress = new NetTask().execute("www.google.com").get();
                     if (netAddress != null) {
                         isInternetEnabled = true;
                     }
