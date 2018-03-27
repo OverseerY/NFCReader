@@ -8,97 +8,84 @@
     android:layout_marginBottom="16dp"
     android:layout_marginTop="16dp">
 
-    <FrameLayout
-        android:id="@+id/container_top"
+    <LinearLayout
+        android:id="@+id/stat_linear"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
         <TextView
             android:id="@+id/nfc"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="NFC:" />
+            android:text="@string/nfc"
+            android:textColor="#1565c0"
+            android:layout_weight="1"/>
 
         <TextView
             android:id="@+id/gps"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="GPS:"
-            android:paddingTop="20dp"/>
+            android:text="@string/gps"
+            android:textColor="#1565c0"
+            android:layout_weight="1"/>
 
         <TextView
             android:id="@+id/net"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="NET:"
-            android:paddingTop="40dp"/>
+            android:text="@string/net"
+            android:textColor="#1565c0"
+            android:layout_weight="1"/>
+
+        <TextView
+            android:id="@+id/srv"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/srv"
+            android:textColor="#1565c0"
+            android:layout_weight="1"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/stat_linear2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
 
         <TextView
             android:id="@+id/nfc_stat"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="50dp" />
+            android:layout_weight="1"/>
 
         <TextView
             android:id="@+id/gps_stat"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="50dp"
-            android:paddingTop="20dp"/>
+            android:layout_weight="1"/>
 
         <TextView
             android:id="@+id/net_stat"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="50dp"
-            android:paddingTop="40dp"/>
-    </FrameLayout>
-
-    <FrameLayout
-        android:id="@+id/container_bottom"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+            android:layout_weight="1"/>
 
         <TextView
-            android:id="@+id/tag_info"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-    </FrameLayout>
-
-    <LinearLayout
-        android:id="@+id/container_middle"
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <Button
-            android:id="@+id/save_button"
-            android:layout_width="wrap_content"
+            android:id="@+id/srv_stat"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:onClick="onClickSave"
-            android:text="Save"/>
-
-        <Button
-            android:id="@+id/open_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="onClickOpen"
-            android:text="Open"/>
-
-        <Button
-            android:id="@+id/delete_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="onClickClear"
-            android:text="Clear"/>
+            android:layout_weight="1"/>
 
     </LinearLayout>
+
 
 
     <ListView
         android:id="@+id/list"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:layout_weight="2"/>
 
 </LinearLayout>

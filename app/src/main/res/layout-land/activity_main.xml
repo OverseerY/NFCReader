@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:layout_marginLeft="16dp"
+    android:layout_marginRight="16dp"
+    android:layout_marginBottom="16dp"
+    android:layout_marginTop="16dp">
+
+    <LinearLayout
+        android:id="@+id/stat_land"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/nfc"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:text="@string/nfc"
+            android:textColor="#1565c0"
+            android:layout_weight="0.5"/>
+
+        <TextView
+            android:id="@+id/nfc_stat"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:text="Test"/>
+
+        <TextView
+            android:id="@+id/gps"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:text="@string/gps"
+            android:textColor="#1565c0"
+            android:layout_weight="0.5"/>
+
+        <TextView
+            android:id="@+id/gps_stat"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:text="Test"/>
+
+        <TextView
+            android:id="@+id/net"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:text="@string/net"
+            android:textColor="#1565c0"
+            android:layout_weight="0.5"/>
+
+        <TextView
+            android:id="@+id/net_stat"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:text="Test"/>
+
+        <TextView
+            android:id="@+id/srv"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:text="@string/srv"
+            android:textColor="#1565c0"
+            android:layout_weight="0.5"/>
+
+        <TextView
+            android:id="@+id/srv_stat"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:text="Test"/>
+
+    </LinearLayout>
+
+    <ListView
+        android:id="@+id/list"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent" />
+
+</LinearLayout>

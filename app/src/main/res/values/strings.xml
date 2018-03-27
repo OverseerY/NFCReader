@@ -1,6 +1,10 @@
 <resources>
-    <string name="app_name">NewFuckingTestApp</string>
-    <string name="ok">OK</string>
+    <string name="app_name">NFC Tag Reader</string>
+    <string name="nfc" translatable="false">NFC</string>
+    <string name="gps" translatable="false">GPS</string>
+    <string name="net">Internet</string>
+    <string name="srv">Server</string>
+    <string name="ok" translatable="false">OK</string>
     <string name="fail">FAIL</string>
     <string name="cancel">Cancel</string>
     <string name="warning">Warning!</string>
@@ -22,9 +26,11 @@
     <string name="tag_unknown">Tag name is unknown. Try again or skip it</string>
     <string name="nfc_disabled">NFC adapter is disabled or does not exist. Please, check settings and try again</string>
     <string name="gps_disabled">GPS adapter is disabled or does not exist. Please, check settings and try again</string>
+    <string name="srv_disabled">Server unavailable. Tags data will be saved in file</string>
     <string name="net_disabled">Wi-Fi / Mobile Internet are disabled or connection is lost. Please, check settings and try again</string>
     <string name="location_failure">Fail to request location update</string>
-    <string name="provider_failure">Network provider does not exist</string>
+    <string name="network_provider_failure">Network provider does not exist</string>
+    <string name="gps_provider_failure">GPS provider does not exist</string>
     <string name="location_permission_required">Application requests access to get location while user scanning tags</string>
     <string name="imei_permission_required">Application requests access to get IMEI of the device to use it as unique identifier of user</string>
     <string name="write_permission_required">Application requests access to write file with readed tags on the External Storage</string>
@@ -34,4 +40,7 @@
     <string name="location_is_null">Tag was read successfully, but location is not reachable</string>
     <string name="list_empty">List of objects is empty</string>
     <string name="file_empty">File empty or does not exist</string>
+    <string name="dont_show">Do not show adain</string>
+    <string name="available">Available</string>
+    <string name="unavailable">Unavailable</string>
 </resources>
