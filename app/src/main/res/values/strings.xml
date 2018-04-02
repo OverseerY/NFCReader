@@ -5,7 +5,9 @@
     <string name="net">Internet</string>
     <string name="srv">Server</string>
     <string name="ok" translatable="false">OK</string>
+    <string name="notification">Notification</string>
     <string name="fail">FAIL</string>
+    <string name="exit">Exit</string>
     <string name="cancel">Cancel</string>
     <string name="warning">Warning!</string>
     <string name="settings">Settings</string>
@@ -18,6 +20,8 @@
     <string name="file_not_written">Failed to save data</string>
     <string name="data_restored">Data restored</string>
     <string name="restore_failed">Failed to restore data</string>
+    <string name="file_exists">File exists!</string>
+    <string name="file_doesnt_exist">File does not exist</string>
     <string name="file_deleted">File deleted</string>
     <string name="file_did_not_deleted">Failed to delete file</string>
     <string name="nfc_notification">Unable to read tag. NFC adapter is not reachable</string>

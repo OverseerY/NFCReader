@@ -11,8 +11,6 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
@@ -32,10 +30,8 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -55,11 +51,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.InetAddress;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -72,13 +64,13 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+
 public class MainActivity extends AppCompatActivity {
-
     private static final String TAG = "TEST";
-
-    private static final int TWO_MINUTES = 1000 * 60 * 2;
-
-    private static final int FILE_FOR_LISTVIEW = 1;
 
     private static final int LOCATION_INTERVAL = 1000;
     private static final float LOCATION_DISTANCE = 1f;
@@ -101,9 +93,12 @@ public class MainActivity extends AppCompatActivity {
     private boolean isNetDialogShown;
     private boolean isSrvDialogShown;
 
-    TextView gps_result;
-    TextView nfc_result;
-    TextView internet_result;
+    private boolean isFileChecked;
+
+    private boolean dontShowGps;
+    private boolean dontShowNfc;
+    private boolean dontShowNet;
+    private boolean dontShowSrv;
 
     LocationManager locationManager;
     NfcManager nfcManager;
@@ -111,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
 
     ArrayAdapter<Ticket> adapter;
     List<Ticket> points;
+    List<Ticket> temp_points;
     ListView listView;
 
     private final String[][] techList = new String[][] {
@@ -132,8 +128,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        changeStateIfDisabled();
-
         if (savedInstanceState != null) {
             isGpsDialogShown = savedInstanceState.getBoolean("isGpsDialogShown");
             isNfcDialogShown = savedInstanceState.getBoolean("isNfcDialogShown");
@@ -145,12 +139,27 @@ public class MainActivity extends AppCompatActivity {
             isInternetEnabled = savedInstanceState.getBoolean("isInternetEnabled");
             isServerAvailable = savedInstanceState.getBoolean("isServerAvailable");
 
+            dontShowGps = savedInstanceState.getBoolean("dontShowGps");
+            dontShowNfc = savedInstanceState.getBoolean("dontShowNfc");
+            dontShowNet = savedInstanceState.getBoolean("dontShowNet");
+            dontShowSrv = savedInstanceState.getBoolean("dontShowSrv");
+
+            isFileChecked = savedInstanceState.getBoolean("isFileChecked");
+
             UniqID = savedInstanceState.getString("uuid");
+        } else {
+            dontShowGps = false;
+            dontShowNet = false;
+            dontShowNfc = false;
+            dontShowSrv = false;
+
+            isGpsEnabled = false;
+            isNfcEnabled = false;
+            isInternetEnabled = false;
+            isServerAvailable = false;
         }
 
-        gps_result = (TextView) findViewById(R.id.gps_stat);
-        nfc_result = (TextView) findViewById(R.id.nfc_stat);
-        internet_result = (TextView) findViewById(R.id.net_stat);
+        isFileChecked = false;
 
         description = null;
         currentLatitude = null;
@@ -158,6 +167,7 @@ public class MainActivity extends AppCompatActivity {
         currentTime = null;
 
         points = new ArrayList<>();
+        temp_points = new ArrayList<>();
         listView = (ListView) findViewById(R.id.list);
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, points);
         listView.setAdapter(adapter);
@@ -165,6 +175,11 @@ public class MainActivity extends AppCompatActivity {
         if (UniqID == null) {
             UniqID = getUniqueUserID();
         }
+
+        if (!isFileChecked) {
+            tryToSendFile();
+        }
+
     }
 
     @Override
@@ -176,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
         testInternetState();
         testServerState();
 
-        statusInit();
+        delayBeforeInitState();
         if (isNfcEnabled) {
             listenForNfc();
         }
@@ -197,19 +212,16 @@ public class MainActivity extends AppCompatActivity {
         onSavedInstanceState.putBoolean("isSrvDialogShown", isSrvDialogShown);
         onSavedInstanceState.putString("uuid", UniqID);
 
+        onSavedInstanceState.putBoolean("dontShowGps", dontShowGps);
+        onSavedInstanceState.putBoolean("dontShowNfc", dontShowNfc);
+        onSavedInstanceState.putBoolean("dontShowNet", dontShowNet);
+        onSavedInstanceState.putBoolean("dontShowSrv", dontShowSrv);
+
+        onSavedInstanceState.putBoolean("isFileChecked", isFileChecked);
+
         super.onSaveInstanceState(onSavedInstanceState);
     }
 
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        /*
-        if (isNfcEnabled) {
-            nfcAdapter = NfcAdapter.getDefaultAdapter(this);
-            nfcAdapter.disableForegroundDispatch(this);
-        }*/
-    }
 
     //#endregion
 
@@ -226,15 +238,11 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
         switch (item.getItemId()) {
-            case R.id.open_item:
-                openPoints();
-                return true;
-            case R.id.save_item:
-                savePoints();
-                return true;
-            case R.id.delete_item:
-                deleteFile();
-                //deleteTicket();
+            case R.id.exit_item:
+                nfcAdapter.disableForegroundDispatch(this);
+                locationManager.removeUpdates(locationListener);
+                disableWiFi();
+                finishAndRemoveTask();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -245,57 +253,33 @@ public class MainActivity extends AppCompatActivity {
 
     //#region Sensors State Initialization
 
-    static public boolean isURLReachable(Context context) {
-        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        if (netInfo != null && netInfo.isConnected()) {
-            try {
-                URL url = new URL("http://points.temirtulpar.com/api/values");   // Change to "http://google.com" for www  test.
-                HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
-                urlc.setConnectTimeout(10 * 1000);          // 10 s.
-                urlc.connect();
-                if (urlc.getResponseCode() == 200) {        // 200 = "OK" code (http connection is fine).
-                    Log.wtf("Connection", "Success !");
-                    return true;
-                } else {
-                    return false;
-                }
-            } catch (MalformedURLException ex) {
-                Log.e("isURLReachable", ex.getLocalizedMessage());
-                return false;
-            } catch (IOException e) {
-                Log.e("isURLReachable", e.getLocalizedMessage());
-                return false;
-            }
+
+    static public boolean isURLReachable(String url) {
+        if (get(url) != null) {
+            return true;
         }
         return false;
     }
 
-    static public boolean initInternet(Context context) {
-        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        if (netInfo != null && netInfo.isConnected()) {
-            try {
-                URL url = new URL("http://google.com");   // Change to "http://google.com" for www  test.
-                HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
-                urlc.setConnectTimeout(5 * 1000);          // 5 s.
-                urlc.connect();
-                if (urlc.getResponseCode() == 200) {        // 200 = "OK" code (http connection is fine).
-                    Log.wtf("Connection", "Success !");
-                    return true;
-                } else {
-                    return false;
-                }
-            } catch (MalformedURLException ex) {
-                Log.e("isURLReachable", ex.getLocalizedMessage());
-                return false;
-            } catch (IOException e) {
-                Log.e("isURLReachable", e.getLocalizedMessage());
-                return false;
+    static String get(String url) {
+        OkHttpClient client = new OkHttpClient();
+        Request req = new Request.Builder().url(url).get().build();
+        try {
+
+            Response resp = client.newCall(req).execute();
+            ResponseBody body = resp.body();
+            if (resp.isSuccessful()) {
+                return body.string(); // Closes automatically.
+            } else {
+                body.close();
+                return null;
             }
+        } catch (IOException e) {
+            Log.e("get_HTTP_Response", e.getLocalizedMessage());
+            return null;
         }
-        return false;
     }
+
 
     private boolean initNFC() {
         nfcManager = (NfcManager) this.getSystemService(Context.NFC_SERVICE);
@@ -334,7 +318,7 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 final String result;
                 final int textColor;
-                if (initInternet(getApplicationContext())) {
+                if (isURLReachable("http://google.com")) {
                     result = getString(R.string.ok);
                     textColor = getResources().getColor(R.color.color_success);
                     isInternetEnabled = true;
@@ -422,7 +406,8 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 final String result;
                 final int textColor;
-                if (isURLReachable(getApplicationContext())) {
+
+                if (isURLReachable("http://points.temirtulpar.com/api/values")) {
                     result = getString(R.string.ok);
                     textColor = getResources().getColor(R.color.color_success);
                     isServerAvailable = true;
@@ -458,29 +443,29 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void changeStateIfDisabled() {
-        WifiManager wifi;
-        wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-
-        if (!wifi.isWifiEnabled())
-            wifi.setWifiEnabled(true);//Turn on Wifi
-    }
-
     private void statusInit() {
-        if (!isGpsEnabled && !isGpsDialogShown) {
-            customDialog(getString(R.string.warning), getString(R.string.gps_disabled), getString(R.string.settings), 2);
+        if (!dontShowGps) {
+            if (!isGpsEnabled && !isGpsDialogShown) {
+                customDialog(getString(R.string.warning), getString(R.string.gps_disabled), getString(R.string.settings), 2);
+            }
         }
 
-        if (!isInternetEnabled && !isNetDialogShown) {
-            customDialog(getString(R.string.warning), getString(R.string.net_disabled), getString(R.string.settings), 3);
+        if (!dontShowNet) {
+            if (!isInternetEnabled && !isNetDialogShown) {
+                customDialog(getString(R.string.warning), getString(R.string.net_disabled), getString(R.string.settings), 3);
+            }
         }
 
-        if (!isNfcEnabled && !isNfcDialogShown) {
-            customDialog(getString(R.string.warning), getString(R.string.nfc_disabled), getString(R.string.settings), 1);
+        if (!dontShowNfc) {
+            if (!isNfcEnabled && !isNfcDialogShown) {
+                customDialog(getString(R.string.warning), getString(R.string.nfc_disabled), getString(R.string.settings), 1);
+            }
         }
 
-        if (!isServerAvailable && !isSrvDialogShown) {
-            customDialog(getString(R.string.warning), getString(R.string.srv_disabled), getString(R.string.dont_show), 4);
+        if (!dontShowSrv) {
+            if (!isServerAvailable && !isSrvDialogShown) {
+                customDialog(getString(R.string.warning), getString(R.string.srv_disabled), getString(R.string.ok), 4);
+            }
         }
     }
 
@@ -489,6 +474,7 @@ public class MainActivity extends AppCompatActivity {
     //#region Reading Tag
     @Override
     protected void onNewIntent(Intent intent) {
+
         if (isNfcEnabled) {
             String tag_data = "";
             String tag_id = "";
@@ -503,7 +489,6 @@ public class MainActivity extends AppCompatActivity {
                                 byte[] payload = recs[j].getPayload();
                                 String textEncoding = ((payload[0] & 0200) == 0) ? "UTF-8" : "UTF-16";
                                 int langCodeLen = payload[0] & 0077;
-
                                 tag_data += (new String(payload, langCodeLen + 1, payload.length - langCodeLen - 1, textEncoding));
                             }
                         }
@@ -514,16 +499,14 @@ public class MainActivity extends AppCompatActivity {
             }
             if (tag_data != "") {
                 description = tag_data;
+                currentTime = getCurTime();
                 if (currentLatitude != null && currentLongitude != null) {
                     if (isInternetEnabled && isServerAvailable) {
-                        addPoint(description, converteTime(Long.parseLong(currentTime)));
+                        addExtendedPoint(description, currentLatitude, currentLongitude, currentTime, UniqID);
                         new UploadJsonTask().execute();
                     } else {
-                        addPoint(description, converteTime(Long.parseLong(currentTime)));
-                        //addTicket(description, currentLatitude, currentLongitude, currentTime, IMEI);
+                        addExtendedPoint(description, currentLatitude, currentLongitude, currentTime, UniqID);
                         savePoints();
-                        //saveTickets();
-                        //customSnackbar("Tag <" + description + "> has been saved", getString(R.string.ok));
                     }
                 } else {
                     customSnackbar(getString(R.string.location_is_null), getString(R.string.ok));
@@ -558,25 +541,6 @@ public class MainActivity extends AppCompatActivity {
         return out;
     }
 
-    private String getCurTime() {
-        DateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-        Date date = new Date();
-        String formatted = format.format(date);
-        return formatted;
-    }
-
-    private String converteTime(long value) {
-        DateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-        Date date = new Date(value);
-        String formatted = format.format(date);
-        return formatted;
-    }
-
-    private String getUniqueUserID() {
-        String uuid;
-        uuid = UUID.randomUUID().toString();
-        return uuid;
-    }
     //#endregion
 
     //#region Dialogs
@@ -586,18 +550,18 @@ public class MainActivity extends AppCompatActivity {
                 MainActivity.this);
         builder.setTitle(title);
         builder.setMessage(message);
-        builder.setNeutralButton(getString(R.string.ok),
+        builder.setNeutralButton(getString(R.string.dont_show),
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if (settingsId == 1)
-                            isNfcDialogShown = true;
+                            dontShowNfc = true;
                         if (settingsId == 2)
-                            isGpsDialogShown = true;
+                            dontShowGps = true;
                         if (settingsId == 3)
-                            isNetDialogShown = true;
+                            dontShowNet = true;
                         if (settingsId == 4)
-                            isNetDialogShown = true;
+                            dontShowSrv = true;
                     }
                 });
 
@@ -674,67 +638,12 @@ public class MainActivity extends AppCompatActivity {
 
     //#region Get Location
 
-    /** Determines whether one Location reading is better than the current Location fix
-     * @param location  The new Location that you want to evaluate
-     * @param currentBestLocation  The current Location fix, to which you want to compare the new one
-     */
-
-    protected boolean isBetterLocation(Location location, Location currentBestLocation) {
-        if (currentBestLocation == null) {
-            // A new location is always better than no location
-            return true;
-        }
-
-        // Check whether the new location fix is newer or older
-        long timeDelta = location.getTime() - currentBestLocation.getTime();
-        boolean isSignificantlyNewer = timeDelta > TWO_MINUTES;
-        boolean isSignificantlyOlder = timeDelta < -TWO_MINUTES;
-        boolean isNewer = timeDelta > 0;
-
-        // If it's been more than two minutes since the current location, use the new location
-        // because the user has likely moved
-        if (isSignificantlyNewer) {
-            return true;
-            // If the new location is more than two minutes older, it must be worse
-        } else if (isSignificantlyOlder) {
-            return false;
-        }
-
-        // Check whether the new location fix is more or less accurate
-        int accuracyDelta = (int) (location.getAccuracy() - currentBestLocation.getAccuracy());
-        boolean isLessAccurate = accuracyDelta > 0;
-        boolean isMoreAccurate = accuracyDelta < 0;
-        boolean isSignificantlyLessAccurate = accuracyDelta > 200;
-
-        // Check if the old and new location are from the same provider
-        boolean isFromSameProvider = isSameProvider(location.getProvider(),
-                currentBestLocation.getProvider());
-
-        // Determine location quality using a combination of timeliness and accuracy
-        if (isMoreAccurate) {
-            return true;
-        } else if (isNewer && !isLessAccurate) {
-            return true;
-        } else if (isNewer && !isSignificantlyLessAccurate && isFromSameProvider) {
-            return true;
-        }
-        return false;
-    }
-
-    /** Checks whether two providers are the same */
-    private boolean isSameProvider(String provider1, String provider2) {
-        if (provider1 == null) {
-            return provider2 == null;
-        }
-        return provider1.equals(provider2);
-    }
-
     LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
             currentLatitude = location.convert(location.getLatitude(), location.FORMAT_DEGREES);
             currentLongitude = location.convert(location.getLongitude(), location.FORMAT_DEGREES);
-            currentTime = String.valueOf(location.getTime());
+            //currentTime = String.valueOf(location.getTime());
         }
 
         @Override
@@ -749,7 +658,6 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onProviderDisabled(String provider) {
-
         }
     };
 
@@ -809,12 +717,23 @@ public class MainActivity extends AppCompatActivity {
     //#region JSON Operations
 
     public static void executeJson(String description, String latitude, String longitude, String time, String uniqID) {
-        Map<String, String> ticket = new HashMap<String, String>();
+        Map<String, String> ticket = new HashMap<>();
         ticket.put("Description", description);
         ticket.put("Ltt", latitude);
         ticket.put("Lng", longitude);
         ticket.put("TimeMS", time);
         ticket.put("IMEI", uniqID);
+        String json = new GsonBuilder().create().toJson(ticket, Map.class);
+        makeRequest("http://points.temirtulpar.com/api/values", json);
+    }
+
+    public static void executeJsonFromObject(Ticket tag) {
+        Map<String, String> ticket = new HashMap<>();
+        ticket.put("Description", tag.getmDescription());
+        ticket.put("Ltt", tag.getmLatitude());
+        ticket.put("Lng", tag.getmLongitude());
+        ticket.put("TimeMS", tag.getmTime());
+        ticket.put("IMEI", tag.getmUid());
         String json = new GsonBuilder().create().toJson(ticket, Map.class);
         makeRequest("http://points.temirtulpar.com/api/values", json);
     }
@@ -828,11 +747,14 @@ public class MainActivity extends AppCompatActivity {
             httpPost.setHeader("Content-type", "application/json");
             return new DefaultHttpClient().execute(httpPost);
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            Log.e("makeRequest_uee", e.getLocalizedMessage());
+            //e.printStackTrace();
         } catch (ClientProtocolException e) {
-            e.printStackTrace();
+            Log.e("makeRequest_cpe", e.getLocalizedMessage());
+            //e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e("makeRequest_io", e.getLocalizedMessage());
+            //e.printStackTrace();
         }
         return null;
     }
@@ -841,47 +763,131 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(URL... urls) {
             executeJson(description, currentLatitude, currentLongitude, currentTime, UniqID);
-            //customSnackbar("Tag <" + description + "> has been sent", getString(R.string.ok));
             return null;
         }
     }
+
+    private class UploadOldJsonTask extends AsyncTask<Ticket, Integer, String>{
+        @Override
+        protected String doInBackground(Ticket... urls) {
+            executeJsonFromObject(urls[0]);
+            return null;
+        }
+    }
+
 
     //#endregion
 
     //#region Operations with Points
 
-    private void addPoint(String name, String time) {
-        Ticket point = new Ticket(name, time);
+
+    private void addExtendedPoint(String name, String latit, String longit, String time, String uuid) {
+        Ticket point = new Ticket(name, latit, longit, time, uuid);
         points.add(point);
         adapter.notifyDataSetChanged();
     }
 
     private void savePoints() {
-        boolean result = JSONHelper.exportToJSON(this, points, FILE_FOR_LISTVIEW);
-        if (result) {
-            customSnackbar(getString(R.string.file_written), getString(R.string.ok));
-        } else {
-            customSnackbar(getString(R.string.file_not_written), getString(R.string.ok));
+        try {
+            JSONHelper.exportToJSON(this, points);
+        } catch (Exception e) {
+            Log.e("savePoints", e.getLocalizedMessage());
         }
     }
 
     private void openPoints() {
-        points = JSONHelper.importFromJSON(this, FILE_FOR_LISTVIEW);
-        if (points != null) {
-            adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, points);
-            listView.setAdapter(adapter);
-            customSnackbar(getString(R.string.data_restored), getString(R.string.ok));
-        } else {
-            customSnackbar(getString(R.string.restore_failed), getString(R.string.ok));
+        try {
+            temp_points = JSONHelper.importFromJSON(this);
+            if (temp_points != null) {
+                points = temp_points;
+                adapter.notifyDataSetChanged();
+            } else {
+                customSnackbar(getString(R.string.restore_failed), getString(R.string.ok));
+            }
+        } catch (Exception e) {
+            Log.e("openPoints", e.getLocalizedMessage());
         }
     }
 
     private void deleteFile() {
-        boolean result = JSONHelper.deleteThisFuckingFile(this, FILE_FOR_LISTVIEW);
-        if (result) {
-            customSnackbar(getString(R.string.file_deleted), getString(R.string.ok));
-        } else {
-            customSnackbar(getString(R.string.file_did_not_deleted), getString(R.string.ok));
+        try {
+            boolean result = JSONHelper.deleteThisFuckingFile(this);
+            if (result) {
+                points.clear();
+                adapter.notifyDataSetChanged();
+                customSnackbar(getString(R.string.file_deleted), getString(R.string.ok));
+            } else {
+                customSnackbar(getString(R.string.file_did_not_deleted), getString(R.string.ok));
+            }
+        } catch (Exception e) {
+            Log.e("deleteFile", e.getLocalizedMessage());
+        }
+    }
+
+    //#endregion
+
+    //#region Miscellaneous
+
+    private void checkFileExistance() {
+        try {
+            openPoints();
+            if (points != null || points.size() < 1) {
+                for (Ticket t : points) {
+                    new UploadOldJsonTask().execute(t);
+                }
+                deleteFile();
+                isFileChecked = true;
+            }
+        } catch (Exception e) {
+            Log.e("checkFile", e.getLocalizedMessage());
+        }
+    }
+
+    private String getCurTime() {
+        long value = System.currentTimeMillis();
+        String date = String.valueOf(value);
+        return date;
+    }
+
+    private String converteTime(long value) {
+        DateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+        Date date = new Date(value);
+        String formatted = format.format(date);
+        return formatted;
+    }
+
+    private String getUniqueUserID() {
+        String uuid;
+        uuid = UUID.randomUUID().toString();
+        return uuid;
+    }
+
+    public void tryToSendFile() {
+        Timer sendTimer = new Timer();
+        sendTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if (isInternetEnabled && isServerAvailable && !isFileChecked ) {
+                    checkFileExistance();
+                }
+            }
+        }, 0L, 15L * 1000);
+    }
+
+    public void delayBeforeInitState() {
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                statusInit();
+            }
+        }, 2000);
+    }
+
+    private void disableWiFi() {
+        WifiManager wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        if (wifi.isWifiEnabled()) {
+            wifi.setWifiEnabled(false);
         }
     }
 

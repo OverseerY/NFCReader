@@ -8,7 +8,9 @@
     <string name="fail">Отказ</string>
     <string name="cancel">Отмена</string>
     <string name="warning">Предупреждение!</string>
+    <string name="notification">Уведомление</string>
     <string name="settings">Настройки</string>
+    <string name="exit">Выход</string>
     <string name="failure">Сбой</string>
     <string name="error">Ошибка!</string>
     <string name="empy_obj">Объект не имеет значений</string>
@@ -20,6 +22,8 @@
     <string name="restore_failed">Сбой в процессе восстановления данных</string>
     <string name="file_deleted">Файл очищен</string>
     <string name="file_did_not_deleted">Сбой в процессе очистки файла</string>
+    <string name="file_exists">Файл существует!</string>
+    <string name="file_doesnt_exist">Файл не существует</string>
     <string name="nfc_notification">Невозможно считать метку. NFC-адаптер недоступен</string>
     <string name="tag_success">Метка успешно считана!</string>
     <string name="tag_failure">Метка нераспознана. Попытайтесь снова</string>
