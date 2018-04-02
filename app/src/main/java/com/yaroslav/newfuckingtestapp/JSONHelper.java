@@ -1,7 +1,6 @@
 package com.yaroslav.newfuckingtestapp;
 
 import android.content.Context;
-import android.os.Environment;
 import android.util.Log;
 
 import com.google.gson.Gson;
@@ -14,7 +13,6 @@ import java.util.List;
 
 public class JSONHelper {
     private static final String FILE_POINTS = "data.json";
-    private static final String FILE_TAGS = "tags.json";
 
     private static class DataItems {
         private List<Ticket> tickets;
@@ -28,6 +26,7 @@ public class JSONHelper {
         }
     }
 
+    //Delete data.json
     static boolean deleteThisFuckingFile(Context context) {
         try {
             context.deleteFile(FILE_POINTS);
@@ -38,6 +37,7 @@ public class JSONHelper {
         return false;
     }
 
+    //Save tags to data.json
     static boolean exportToJSON(Context context, List<Ticket> dataList) {
         Gson gson = new Gson();
         DataItems dataItems = new DataItems();
@@ -66,6 +66,7 @@ public class JSONHelper {
         return false;
     }
 
+    //Load tags from data.gson
     static List<Ticket> importFromJSON(Context context) {
         InputStreamReader streamReader = null;
         FileInputStream fileInputStream = null;

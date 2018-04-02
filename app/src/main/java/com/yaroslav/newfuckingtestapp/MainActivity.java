@@ -72,8 +72,8 @@ import okhttp3.ResponseBody;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "TEST";
 
-    private static final int LOCATION_INTERVAL = 1000;
-    private static final float LOCATION_DISTANCE = 1f;
+    private static final int LOCATION_INTERVAL = 1000; // 1 sec
+    private static final float LOCATION_DISTANCE = 1f; // 1 meter
 
     private static final int PERMISSION_REQUEST_LOCATION = 0;
 
@@ -109,6 +109,8 @@ public class MainActivity extends AppCompatActivity {
     List<Ticket> temp_points;
     ListView listView;
 
+
+    //Different types of NFC technology
     private final String[][] techList = new String[][] {
             new String[] {
                     NfcA.class.getName(),
@@ -128,6 +130,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //Restore parameters and flags after activity re-creation
         if (savedInstanceState != null) {
             isGpsDialogShown = savedInstanceState.getBoolean("isGpsDialogShown");
             isNfcDialogShown = savedInstanceState.getBoolean("isNfcDialogShown");
@@ -146,6 +149,7 @@ public class MainActivity extends AppCompatActivity {
 
             isFileChecked = savedInstanceState.getBoolean("isFileChecked");
 
+            //In one session UUID do not change (if user don't close app)
             UniqID = savedInstanceState.getString("uuid");
         } else {
             dontShowGps = false;
@@ -159,6 +163,8 @@ public class MainActivity extends AppCompatActivity {
             isServerAvailable = false;
         }
 
+        //Show is file with saved tags on last session
+        //was read and sent to server
         isFileChecked = false;
 
         description = null;
@@ -166,16 +172,25 @@ public class MainActivity extends AppCompatActivity {
         currentLongitude = null;
         currentTime = null;
 
+        //Array of scanned tags (object type Ticket)
         points = new ArrayList<>();
+
+        //Using for storage tags saved to file and restored for send
         temp_points = new ArrayList<>();
+
         listView = (ListView) findViewById(R.id.list);
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, points);
         listView.setAdapter(adapter);
 
+        //simply get UUID
         if (UniqID == null) {
             UniqID = getUniqueUserID();
         }
 
+        //As planned, read file (if exists) with scanned tags
+        //and try to send them to server if internet is available.
+        //Enough to start once and method will run continuously
+        //with fixed interval
         if (!isFileChecked) {
             tryToSendFile();
         }
@@ -186,12 +201,18 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
+        //Methods run continuously for tracing
+        //changes of sensors states or flags.
         testGpsState();
         testNfcState();
         testInternetState();
         testServerState();
 
+        //Delay to prevent false positives
+        //of dialog windows show.
         delayBeforeInitState();
+
+        //Check flags to prevent misuse
         if (isNfcEnabled) {
             listenForNfc();
         }
@@ -200,6 +221,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
+    //Save parameters and flags before activity destroy
     @Override
     protected void onSaveInstanceState(Bundle onSavedInstanceState) {
         onSavedInstanceState.putBoolean("isGpsEnabled", isGpsEnabled);
@@ -238,10 +261,15 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
         switch (item.getItemId()) {
+            //Exit
             case R.id.exit_item:
+                //Stop using NFC in program
                 nfcAdapter.disableForegroundDispatch(this);
+                //Stop using geolocation
                 locationManager.removeUpdates(locationListener);
+                //Turn off Wi-Fi adapter
                 disableWiFi();
+                //Complete finish work and close app
                 finishAndRemoveTask();
                 return true;
             default:
@@ -249,11 +277,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    //#endregion  Creation
+    //#endregion
 
     //#region Sensors State Initialization
 
 
+    //Get URl as argument to check it's availability and return result
     static public boolean isURLReachable(String url) {
         if (get(url) != null) {
             return true;
@@ -261,11 +290,11 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
+    //Method of URL check that prevents memory leak (as AndroidStudio says)
     static String get(String url) {
         OkHttpClient client = new OkHttpClient();
         Request req = new Request.Builder().url(url).get().build();
         try {
-
             Response resp = client.newCall(req).execute();
             ResponseBody body = resp.body();
             if (resp.isSuccessful()) {
@@ -280,7 +309,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
+    //Initialization of NFC adapter (if exists)
     private boolean initNFC() {
         nfcManager = (NfcManager) this.getSystemService(Context.NFC_SERVICE);
         isNfcEnabled = false;
@@ -295,6 +324,7 @@ public class MainActivity extends AppCompatActivity {
         return isNfcEnabled;
     }
 
+    //Initialization of geolocation service
     private boolean initGPS() {
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         isGpsEnabled = false;
@@ -308,7 +338,9 @@ public class MainActivity extends AppCompatActivity {
         return isGpsEnabled;
     }
 
-
+    //Continuously check state of Internet connection.
+    //Method change text on working activity
+    //depending on the current state.
     public void testInternetState() {
         Timer netTimer = new Timer();
         final Handler netHandler = new Handler();
@@ -338,6 +370,9 @@ public class MainActivity extends AppCompatActivity {
         }, 0L, 5L * 1000);
     }
 
+    //Continuously check state of geolocation adapter.
+    //Method change text on working activity
+    //depending on the current state.
     public void testGpsState() {
         Timer gpsTimer = new Timer();
         final Handler gpsHandler = new Handler();
@@ -367,6 +402,9 @@ public class MainActivity extends AppCompatActivity {
         }, 0L, 5L * 1000);
     }
 
+    //Continuously check state of NFC adapter.
+    //Method change text on working activity
+    //depending on the current state.
     public void testNfcState() {
         Timer nfcTimer = new Timer();
         final Handler nfcHandler = new Handler();
@@ -397,6 +435,9 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    //Continuously check state of reach local server.
+    //Method change text on working activity
+    //depending on the current state.
     public void testServerState() {
         Timer myTimer = new Timer(); // Создаем таймер
         final Handler uiHandler = new Handler();
@@ -428,6 +469,8 @@ public class MainActivity extends AppCompatActivity {
         }, 0L, 10L * 1000);
     }
 
+    //Method receives management of NFC adapter
+    //and activate it, so application can read tags.
     private void listenForNfc() {
         try {
             PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
@@ -443,9 +486,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //Method checks flags and show dialog windows
+    //if something is disabled and/or not reachable.
     private void statusInit() {
         if (!dontShowGps) {
             if (!isGpsEnabled && !isGpsDialogShown) {
+                //1-st parameter - Header of dialog window, 2-nd - Information, 3-rd - Button text
                 customDialog(getString(R.string.warning), getString(R.string.gps_disabled), getString(R.string.settings), 2);
             }
         }
@@ -472,13 +518,20 @@ public class MainActivity extends AppCompatActivity {
     //#endregion
 
     //#region Reading Tag
+
+
     @Override
     protected void onNewIntent(Intent intent) {
-
+        //Perhaps following string is unnecessary, because
+        //intent already can't be obtained if NFC-adapter disabled or absent.
         if (isNfcEnabled) {
+            //Plain text saved in tag. Used as tag's name
             String tag_data = "";
+            //Tag's UID. Used if plain text can not be red
             String tag_id = "";
 
+            //If following technology (EXTRA_NDEF_MESSAGE) is not working,
+            //with a high probability tag is not supported
             Parcelable[] data = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
             if (data != null) {
                 try {
@@ -497,35 +550,52 @@ public class MainActivity extends AppCompatActivity {
                     Log.e("TagDispatch", e.getLocalizedMessage());
                 }
             }
+            //Check if tag name is not empty
             if (tag_data != "") {
+                //Assignment tag name to variable
                 description = tag_data;
+                //Get current time and assignment it to variable
                 currentTime = getCurTime();
+                //check if geolocation is not null
                 if (currentLatitude != null && currentLongitude != null) {
+                    //Check if Internet and server are reachable
                     if (isInternetEnabled && isServerAvailable) {
+                        //add tag with full information to array..
                         addExtendedPoint(description, currentLatitude, currentLongitude, currentTime, UniqID);
+                        //..and send to server
                         new UploadJsonTask().execute();
+                    //otherwise save tag in file
                     } else {
+                        //add tag to array
                         addExtendedPoint(description, currentLatitude, currentLongitude, currentTime, UniqID);
+                        //save in file
                         savePoints();
                     }
+                //If location is null, show appropriate message in bottom of screen
                 } else {
                     customSnackbar(getString(R.string.location_is_null), getString(R.string.ok));
                 }
+                //Anyway tag was red, so show window about it.
                 autoCloseDialog(tag_data, getString(R.string.tag_success));
+            //otherwise use another technology and read tag UID
             } else {
                 if (intent.getAction().equals(NfcAdapter.ACTION_TAG_DISCOVERED)) {
                     String nfcid = ByteArrayToHexString(intent.getByteArrayExtra(NfcAdapter.EXTRA_ID));
                     tag_id = nfcid;
+                    //Show dialog window that tag was red but is unknown.
                     autoCloseDialog(tag_id, getString(R.string.tag_unknown));
                 } else {
+                    //Show dialog window about failure if tag can not be red at all.
                     autoCloseDialog(getString(R.string.failure), getString(R.string.tag_failure));
                 }
             }
         } else {
+            //Perhaps it never will be shown
             customSnackbar(getString(R.string.nfc_notification),getString(R.string.ok));
         }
     }
 
+    //Method to convert scanned tag's UID to readable text
     private String ByteArrayToHexString(byte [] inarray) {
         int i, j, in;
         String [] hex = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
@@ -552,6 +622,7 @@ public class MainActivity extends AppCompatActivity {
         builder.setMessage(message);
         builder.setNeutralButton(getString(R.string.dont_show),
                 new DialogInterface.OnClickListener() {
+                    //Do not show this dialog window again (according to settingsId)
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if (settingsId == 1)
@@ -565,6 +636,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
 
+        //Open necessary settings according settingsId
         builder.setPositiveButton(positiveButton,
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog,
@@ -601,6 +673,7 @@ public class MainActivity extends AppCompatActivity {
             isNetDialogShown = true;
     }
 
+    //Unobtrusive dialog window without buttons that close automatically after 2 sec
     public void autoCloseDialog(String title, String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(
                 MainActivity.this);
@@ -624,11 +697,13 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    //Snackbar (message at the bottom of screen) with unused button
     public void customSnackbar(String message, String button) {
         Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG)
                 .setAction(button, new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        //TO DO: something useful
                     }
                 });
         snackbar.show();
@@ -638,6 +713,7 @@ public class MainActivity extends AppCompatActivity {
 
     //#region Get Location
 
+    //Initialize location listener
     LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
@@ -661,6 +737,8 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    //Initialize location providers.
+    //Actually, NETWORK_PROVIDER is not used
     private void initLocationProvider() {
         Log.i(TAG, "initializeLocationProvider");
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -687,6 +765,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //Ask user for geolocation permissions
     private void requestLocationPermissions() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
             Snackbar.make(findViewById(android.R.id.content), R.string.location_permission_required, Snackbar.LENGTH_INDEFINITE).setAction(R.string.ok, new View.OnClickListener() {
@@ -716,17 +795,21 @@ public class MainActivity extends AppCompatActivity {
 
     //#region JSON Operations
 
+    //Use this method for send tags right after reading
     public static void executeJson(String description, String latitude, String longitude, String time, String uniqID) {
         Map<String, String> ticket = new HashMap<>();
+        //First string - name of parameter as on server, second - as local parameter
         ticket.put("Description", description);
         ticket.put("Ltt", latitude);
         ticket.put("Lng", longitude);
         ticket.put("TimeMS", time);
         ticket.put("IMEI", uniqID);
         String json = new GsonBuilder().create().toJson(ticket, Map.class);
+        //Hard-coded URL of server
         makeRequest("http://points.temirtulpar.com/api/values", json);
     }
 
+    //Use this method for send tags from file
     public static void executeJsonFromObject(Ticket tag) {
         Map<String, String> ticket = new HashMap<>();
         ticket.put("Description", tag.getmDescription());
@@ -738,6 +821,7 @@ public class MainActivity extends AppCompatActivity {
         makeRequest("http://points.temirtulpar.com/api/values", json);
     }
 
+    //JSON request
     public static HttpResponse makeRequest(String uri, String json) {
         try {
             HttpPost httpPost = new HttpPost(uri);
@@ -759,6 +843,7 @@ public class MainActivity extends AppCompatActivity {
         return null;
     }
 
+    //Use this method for uploading right after reading
     private class UploadJsonTask extends AsyncTask<URL, Integer, String> {
         @Override
         protected String doInBackground(URL... urls) {
@@ -767,6 +852,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //Use this method for uploading from file
     private class UploadOldJsonTask extends AsyncTask<Ticket, Integer, String>{
         @Override
         protected String doInBackground(Ticket... urls) {
@@ -828,6 +914,8 @@ public class MainActivity extends AppCompatActivity {
 
     //#region Miscellaneous
 
+    //Check private directory for file with saved tags
+    //and try to read it and send to server.
     private void checkFileExistance() {
         try {
             openPoints();
@@ -843,12 +931,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //Returns time right here, right now
     private String getCurTime() {
         long value = System.currentTimeMillis();
         String date = String.valueOf(value);
         return date;
     }
 
+    //Use this method if need to convert time gotten from locationListener
     private String converteTime(long value) {
         DateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
         Date date = new Date(value);
@@ -856,12 +946,14 @@ public class MainActivity extends AppCompatActivity {
         return formatted;
     }
 
+    //Generate UUID
     private String getUniqueUserID() {
         String uuid;
         uuid = UUID.randomUUID().toString();
         return uuid;
     }
 
+    //Method for send tags from file with 10 sec interval
     public void tryToSendFile() {
         Timer sendTimer = new Timer();
         sendTimer.schedule(new TimerTask() {
@@ -871,9 +963,11 @@ public class MainActivity extends AppCompatActivity {
                     checkFileExistance();
                 }
             }
-        }, 0L, 15L * 1000);
+        }, 0L, 10L * 1000);
     }
 
+    //Delay to prevent false positives
+    //of dialog windows show.
     public void delayBeforeInitState() {
         final Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
@@ -884,6 +978,7 @@ public class MainActivity extends AppCompatActivity {
         }, 2000);
     }
 
+    //Disable WiFi
     private void disableWiFi() {
         WifiManager wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         if (wifi.isWifiEnabled()) {
