@@ -195,6 +195,7 @@ public class MainActivity extends AppCompatActivity {
             tryToSendFile();
         }
 
+        //refreshListViewAdapter();
     }
 
     @Override
@@ -566,10 +567,15 @@ public class MainActivity extends AppCompatActivity {
                         new UploadJsonTask().execute();
                     //otherwise save tag in file
                     } else {
+                        if (isFileChecked) {
+                            points.clear();
+                            isFileChecked = false;
+                        }
                         //add tag to array
                         addExtendedPoint(description, currentLatitude, currentLongitude, currentTime, UniqID);
                         //save in file
                         savePoints();
+
                     }
                 //If location is null, show appropriate message in bottom of screen
                 } else {
@@ -884,11 +890,14 @@ public class MainActivity extends AppCompatActivity {
     private void openPoints() {
         try {
             temp_points = JSONHelper.importFromJSON(this);
-            if (temp_points != null) {
-                points = temp_points;
+            if (!temp_points.isEmpty()) {
+                points.addAll(temp_points);
+                //points = temp_points;
+                temp_points.clear();
                 adapter.notifyDataSetChanged();
             } else {
-                customSnackbar(getString(R.string.restore_failed), getString(R.string.ok));
+                Snackbar.make(findViewById(android.R.id.content), getString(R.string.restore_failed), Snackbar.LENGTH_SHORT);
+                //customSnackbar(getString(R.string.restore_failed), getString(R.string.ok));
             }
         } catch (Exception e) {
             Log.e("openPoints", e.getLocalizedMessage());
@@ -905,6 +914,7 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 customSnackbar(getString(R.string.file_did_not_deleted), getString(R.string.ok));
             }
+
         } catch (Exception e) {
             Log.e("deleteFile", e.getLocalizedMessage());
         }
@@ -918,13 +928,15 @@ public class MainActivity extends AppCompatActivity {
     //and try to read it and send to server.
     private void checkFileExistance() {
         try {
+            points.clear();
             openPoints();
-            if (points != null || points.size() < 1) {
+            if (points != null) {
                 for (Ticket t : points) {
                     new UploadOldJsonTask().execute(t);
                 }
                 deleteFile();
                 isFileChecked = true;
+                Snackbar.make(findViewById(android.R.id.content), getString(R.string.tag_sent), Snackbar.LENGTH_LONG).show();
             }
         } catch (Exception e) {
             Log.e("checkFile", e.getLocalizedMessage());
@@ -961,6 +973,7 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 if (isInternetEnabled && isServerAvailable && !isFileChecked ) {
                     checkFileExistance();
+                    adapter.notifyDataSetChanged();
                 }
             }
         }, 0L, 10L * 1000);

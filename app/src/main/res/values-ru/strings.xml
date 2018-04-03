@@ -26,6 +26,7 @@
     <string name="file_doesnt_exist">Файл не существует</string>
     <string name="nfc_notification">Невозможно считать метку. NFC-адаптер недоступен</string>
     <string name="tag_success">Метка успешно считана!</string>
+    <string name="tag_sent">Метки были успешно отправлены на сервер</string>
     <string name="tag_failure">Метка нераспознана. Попытайтесь снова</string>
     <string name="tag_unknown">Неизвестное имя метки. Попытайтесь снова или пропустите</string>
     <string name="nfc_disabled">NFC-адаптер отключен или отсутствует. Проверьте настройки и попробуйте снова</string>

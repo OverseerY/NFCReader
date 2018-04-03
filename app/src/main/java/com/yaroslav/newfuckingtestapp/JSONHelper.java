@@ -30,7 +30,9 @@ public class JSONHelper {
     static boolean deleteThisFuckingFile(Context context) {
         try {
             context.deleteFile(FILE_POINTS);
-            return true;
+            if (!context.getFileStreamPath(FILE_POINTS).exists()) {
+                return true;
+            }
         } catch (Exception e) {
             Log.e("json_del_file", e.getLocalizedMessage());
         }
