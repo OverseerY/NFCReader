@@ -7,6 +7,7 @@ import java.util.Date;
 
 public class Ticket implements Serializable{
     private String mDescription;
+    private String mTagId;
     private String mLatitude;
     private String mLongitude;
     private String mTime;
@@ -14,8 +15,9 @@ public class Ticket implements Serializable{
 
     public Ticket() {}
 
-    public Ticket(String description, String latitude, String longitude, String time, String uuid) {
+    public Ticket(String description, String tagid, String latitude, String longitude, String time, String uuid) {
         this.mDescription = description;
+        this.mTagId =tagid;
         this.mLatitude = latitude;
         this.mLongitude = longitude;
         this.mTime = time;
@@ -30,6 +32,10 @@ public class Ticket implements Serializable{
 
     public void setmDescription(String value) {
         mDescription = value;
+    }
+
+    public void setmTagId(String value) {
+        mTagId = value;
     }
 
     public void setmLatitude(String value) {
@@ -50,6 +56,10 @@ public class Ticket implements Serializable{
 
     public String getmDescription() {
         return mDescription;
+    }
+
+    public String getmTagId() {
+        return mTagId;
     }
 
     public String getmLatitude() {

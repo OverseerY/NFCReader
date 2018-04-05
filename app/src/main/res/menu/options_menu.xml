@@ -3,4 +3,8 @@
     <item
         android:id="@+id/exit_item"
         android:title="@string/exit"/>
+
+    <item
+        android:id="@+id/history_item"
+        android:title="@string/history" />
 </menu>

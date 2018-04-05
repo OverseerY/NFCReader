@@ -4,6 +4,7 @@
     <string name="gps" translatable="false">GPS</string>
     <string name="net">Internet</string>
     <string name="srv">Server</string>
+    <string name="history">History</string>
     <string name="ok" translatable="false">OK</string>
     <string name="notification">Notification</string>
     <string name="fail">FAIL</string>
@@ -48,4 +49,6 @@
     <string name="dont_show">Do not show adain</string>
     <string name="available">Available</string>
     <string name="unavailable">Unavailable</string>
+    <string name="date_from">Start date</string>
+    <string name="date_to">End date</string>
 </resources>

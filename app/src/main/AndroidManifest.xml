@@ -12,9 +12,7 @@
     <uses-feature
         android:name="android.hardware.nfc"
         android:required="true" />
-
-    <uses-feature
-        android:name="android.hardware.location.gps" />
+    <uses-feature android:name="android.hardware.location.gps" />
 
     <application
         android:allowBackup="true"
@@ -23,13 +21,17 @@
         android:roundIcon="@mipmap/ic_tag"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity"
+        <activity
+            android:name=".MainActivity"
             android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity android:name=".HistoryActivity" >
+
         </activity>
     </application>
 

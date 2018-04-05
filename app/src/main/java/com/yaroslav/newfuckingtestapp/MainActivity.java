@@ -2,7 +2,11 @@ package com.yaroslav.newfuckingtestapp;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
+import android.app.Dialog;
+import android.app.DialogFragment;
 import android.app.PendingIntent;
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -33,13 +37,16 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.DatePicker;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.TimePicker;
 
 import com.google.gson.GsonBuilder;
 
@@ -56,6 +63,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -79,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
 
     private String currentTime;
     private String description;
+    private String tagId;
     private String currentLatitude;
     private String currentLongitude;
     private String UniqID;
@@ -108,7 +117,6 @@ public class MainActivity extends AppCompatActivity {
     List<Ticket> points;
     List<Ticket> temp_points;
     ListView listView;
-
 
     //Different types of NFC technology
     private final String[][] techList = new String[][] {
@@ -194,8 +202,6 @@ public class MainActivity extends AppCompatActivity {
         if (!isFileChecked) {
             tryToSendFile();
         }
-
-        //refreshListViewAdapter();
     }
 
     @Override
@@ -262,6 +268,10 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
         switch (item.getItemId()) {
+            case R.id.history_item:
+                Intent intent = new Intent(this, HistoryActivity.class);
+                startActivity(intent);
+                return true;
             //Exit
             case R.id.exit_item:
                 //Stop using NFC in program
@@ -551,10 +561,16 @@ public class MainActivity extends AppCompatActivity {
                     Log.e("TagDispatch", e.getLocalizedMessage());
                 }
             }
+            if (intent.getAction().equals(NfcAdapter.ACTION_TAG_DISCOVERED)) {
+                String nfcid = ByteArrayToHexString(intent.getByteArrayExtra(NfcAdapter.EXTRA_ID));
+                tag_id = nfcid;
+            }
             //Check if tag name is not empty
-            if (tag_data != "") {
+            if (tag_data != "" && tag_id != "") {
                 //Assignment tag name to variable
                 description = tag_data;
+                //Assignment unique tag id to variable
+                tagId = tag_id;
                 //Get current time and assignment it to variable
                 currentTime = getCurTime();
                 //check if geolocation is not null
@@ -562,7 +578,7 @@ public class MainActivity extends AppCompatActivity {
                     //Check if Internet and server are reachable
                     if (isInternetEnabled && isServerAvailable) {
                         //add tag with full information to array..
-                        addExtendedPoint(description, currentLatitude, currentLongitude, currentTime, UniqID);
+                        addExtendedPoint(description, tagId, currentLatitude, currentLongitude, currentTime, UniqID);
                         //..and send to server
                         new UploadJsonTask().execute();
                     //otherwise save tag in file
@@ -572,7 +588,7 @@ public class MainActivity extends AppCompatActivity {
                             isFileChecked = false;
                         }
                         //add tag to array
-                        addExtendedPoint(description, currentLatitude, currentLongitude, currentTime, UniqID);
+                        addExtendedPoint(description, tagId, currentLatitude, currentLongitude, currentTime, UniqID);
                         //save in file
                         savePoints();
 
@@ -585,15 +601,8 @@ public class MainActivity extends AppCompatActivity {
                 autoCloseDialog(tag_data, getString(R.string.tag_success));
             //otherwise use another technology and read tag UID
             } else {
-                if (intent.getAction().equals(NfcAdapter.ACTION_TAG_DISCOVERED)) {
-                    String nfcid = ByteArrayToHexString(intent.getByteArrayExtra(NfcAdapter.EXTRA_ID));
-                    tag_id = nfcid;
-                    //Show dialog window that tag was red but is unknown.
-                    autoCloseDialog(tag_id, getString(R.string.tag_unknown));
-                } else {
-                    //Show dialog window about failure if tag can not be red at all.
-                    autoCloseDialog(getString(R.string.failure), getString(R.string.tag_failure));
-                }
+                //Show dialog window about failure if tag can not be red at all.
+                autoCloseDialog(getString(R.string.failure), getString(R.string.tag_failure));
             }
         } else {
             //Perhaps it never will be shown
@@ -802,14 +811,15 @@ public class MainActivity extends AppCompatActivity {
     //#region JSON Operations
 
     //Use this method for send tags right after reading
-    public static void executeJson(String description, String latitude, String longitude, String time, String uniqID) {
+    public static void executeJson(String description, String tagId, String latitude, String longitude, String time, String uniqID) {
         Map<String, String> ticket = new HashMap<>();
         //First string - name of parameter as on server, second - as local parameter
         ticket.put("Description", description);
+        ticket.put("CardId", tagId);
         ticket.put("Ltt", latitude);
         ticket.put("Lng", longitude);
         ticket.put("TimeMS", time);
-        ticket.put("IMEI", uniqID);
+        ticket.put("UID", uniqID);
         String json = new GsonBuilder().create().toJson(ticket, Map.class);
         //Hard-coded URL of server
         makeRequest("http://points.temirtulpar.com/api/values", json);
@@ -819,10 +829,11 @@ public class MainActivity extends AppCompatActivity {
     public static void executeJsonFromObject(Ticket tag) {
         Map<String, String> ticket = new HashMap<>();
         ticket.put("Description", tag.getmDescription());
+        ticket.put("CardId", tag.getmTagId());
         ticket.put("Ltt", tag.getmLatitude());
         ticket.put("Lng", tag.getmLongitude());
         ticket.put("TimeMS", tag.getmTime());
-        ticket.put("IMEI", tag.getmUid());
+        ticket.put("UID", tag.getmUid());
         String json = new GsonBuilder().create().toJson(ticket, Map.class);
         makeRequest("http://points.temirtulpar.com/api/values", json);
     }
@@ -853,7 +864,7 @@ public class MainActivity extends AppCompatActivity {
     private class UploadJsonTask extends AsyncTask<URL, Integer, String> {
         @Override
         protected String doInBackground(URL... urls) {
-            executeJson(description, currentLatitude, currentLongitude, currentTime, UniqID);
+            executeJson(description, tagId, currentLatitude, currentLongitude, currentTime, UniqID);
             return null;
         }
     }
@@ -873,8 +884,8 @@ public class MainActivity extends AppCompatActivity {
     //#region Operations with Points
 
 
-    private void addExtendedPoint(String name, String latit, String longit, String time, String uuid) {
-        Ticket point = new Ticket(name, latit, longit, time, uuid);
+    private void addExtendedPoint(String name, String tid, String latit, String longit, String time, String uuid) {
+        Ticket point = new Ticket(name, tid, latit, longit, time, uuid);
         points.add(point);
         adapter.notifyDataSetChanged();
     }
