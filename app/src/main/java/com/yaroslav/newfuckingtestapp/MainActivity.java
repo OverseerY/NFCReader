@@ -47,6 +47,7 @@ import android.widget.DatePicker;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.TimePicker;
+import android.widget.Toast;
 
 import com.google.gson.GsonBuilder;
 
@@ -108,6 +109,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean dontShowNfc;
     private boolean dontShowNet;
     private boolean dontShowSrv;
+
+    private boolean ifPressedBackOnce;
 
     LocationManager locationManager;
     NfcManager nfcManager;
@@ -180,6 +183,8 @@ public class MainActivity extends AppCompatActivity {
         currentLongitude = null;
         currentTime = null;
 
+        ifPressedBackOnce = false;
+
         //Array of scanned tags (object type Ticket)
         points = new ArrayList<>();
 
@@ -229,6 +234,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    @Override
+    public void onBackPressed() {
+        if (ifPressedBackOnce) {
+            nfcAdapter.disableForegroundDispatch(this);
+            //Stop using geolocation
+            locationManager.removeUpdates(locationListener);
+            //finishAffinity();
+            finishAndRemoveTask();
+            //finish();
+            System.exit(0);
+            super.onBackPressed();
+        }
+        this.ifPressedBackOnce = true;
+        Toast.makeText(this, getString(R.string.on_press_back), Toast.LENGTH_SHORT).show();
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                ifPressedBackOnce = false;
+            }
+        }, 2000);
+    }
+
     //Save parameters and flags before activity destroy
     @Override
     protected void onSaveInstanceState(Bundle onSavedInstanceState) {
@@ -271,17 +299,6 @@ public class MainActivity extends AppCompatActivity {
             case R.id.history_item:
                 Intent intent = new Intent(this, HistoryActivity.class);
                 startActivity(intent);
-                return true;
-            //Exit
-            case R.id.exit_item:
-                //Stop using NFC in program
-                nfcAdapter.disableForegroundDispatch(this);
-                //Stop using geolocation
-                locationManager.removeUpdates(locationListener);
-                //Turn off Wi-Fi adapter
-                disableWiFi();
-                //Complete finish work and close app
-                finishAndRemoveTask();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

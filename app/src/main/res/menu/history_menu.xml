@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/history_day"
+        android:title="@string/history_day"/>
+
+    <item
+        android:id="@+id/history_week"
+        android:title="@string/history_week"/>
+
+    <item
+        android:id="@+id/history_month"
+        android:title="@string/history_month"/>
+</menu>

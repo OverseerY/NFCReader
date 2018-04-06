@@ -5,6 +5,8 @@
     <string name="net">Интернет</string>
     <string name="srv">Сервер</string>
     <string name="history">История</string>
+    <string name="download">Скачать</string>
+    <string name="read_tag">Считать NFC метку</string>
     <string name="ok">OK</string>
     <string name="fail">Отказ</string>
     <string name="cancel">Отмена</string>
@@ -51,4 +53,9 @@
     <string name="unavailable">Недоступен</string>
     <string name="date_from">Начальная дата</string>
     <string name="date_to">Конечная дата</string>
+    <string name="history_day">Показать за сутки</string>
+    <string name="history_week">Показать за неделю</string>
+    <string name="history_month">Показать за месяц</string>
+    <string name="on_press_back">Нажмите НАЗАД ещё раз, чтобы выйти</string>
+    <string name="connection_lost">Невозможно загрузить данные с сервера: соединение отсутствует</string>
 </resources>

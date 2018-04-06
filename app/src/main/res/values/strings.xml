@@ -4,7 +4,9 @@
     <string name="gps" translatable="false">GPS</string>
     <string name="net">Internet</string>
     <string name="srv">Server</string>
+    <string name="download">Download</string>
     <string name="history">History</string>
+    <string name="read_tag">Read NFC tag</string>
     <string name="ok" translatable="false">OK</string>
     <string name="notification">Notification</string>
     <string name="fail">FAIL</string>
@@ -51,4 +53,9 @@
     <string name="unavailable">Unavailable</string>
     <string name="date_from">Start date</string>
     <string name="date_to">End date</string>
+    <string name="history_day">Show for a day</string>
+    <string name="history_week">Show for a week</string>
+    <string name="history_month">Show for a month</string>
+    <string name="on_press_back">Press BACK again to exit</string>
+    <string name="connection_lost">Unable to load data from server: connection is lost</string>
 </resources>
