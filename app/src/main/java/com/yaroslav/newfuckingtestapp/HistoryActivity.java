@@ -115,7 +115,6 @@ public class HistoryActivity extends AppCompatActivity {
     //#region Calendar
 
     public void onClickStartDate(View view) {
-
         setStartDate();
     }
 
@@ -184,12 +183,30 @@ public class HistoryActivity extends AppCompatActivity {
 
     private void setInitialDateTo() {
         currentDateToMillisec = dateFinish.getTimeInMillis();
-        dateToField.setText(DateUtils.formatDateTime(this, currentDateToMillisec,DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR));
+        if (currentDateFromMillisec != 0 && currentDateToMillisec < currentDateFromMillisec) {
+            long temp = currentDateFromMillisec;
+            currentDateFromMillisec = currentDateToMillisec;
+            currentDateToMillisec = temp;
+
+            dateFromField.setText(DateUtils.formatDateTime(this, currentDateFromMillisec,DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR ));
+            dateToField.setText(DateUtils.formatDateTime(this, currentDateToMillisec,DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR));
+        } else {
+            dateToField.setText(DateUtils.formatDateTime(this, currentDateToMillisec, DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR));
+        }
     }
 
     private void setInitialDateFrom() {
         currentDateFromMillisec = dateStart.getTimeInMillis();
-        dateFromField.setText(DateUtils.formatDateTime(this, currentDateFromMillisec,DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR ));
+        if (currentDateToMillisec != 0 && currentDateToMillisec < currentDateFromMillisec) {
+            long temp = currentDateFromMillisec;
+            currentDateFromMillisec = currentDateToMillisec;
+            currentDateToMillisec = temp;
+
+            dateFromField.setText(DateUtils.formatDateTime(this, currentDateFromMillisec,DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR ));
+            dateToField.setText(DateUtils.formatDateTime(this, currentDateToMillisec,DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR));
+        } else {
+            dateFromField.setText(DateUtils.formatDateTime(this, currentDateFromMillisec, DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_YEAR));
+        }
     }
 
     private void getLastDay() {
