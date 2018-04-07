@@ -58,4 +58,5 @@
     <string name="history_month">Show for a month</string>
     <string name="on_press_back">Press BACK again to exit</string>
     <string name="connection_lost">Unable to load data from server: connection is lost</string>
+    <string name="progress_message">Loading...</string>
 </resources>

@@ -58,4 +58,5 @@
     <string name="history_month">Показать за месяц</string>
     <string name="on_press_back">Нажмите НАЗАД ещё раз, чтобы выйти</string>
     <string name="connection_lost">Невозможно загрузить данные с сервера: соединение отсутствует</string>
+    <string name="progress_message">Загрузка...</string>
 </resources>

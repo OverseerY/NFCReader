@@ -2,11 +2,7 @@ package com.yaroslav.newfuckingtestapp;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.app.DatePickerDialog;
-import android.app.Dialog;
-import android.app.DialogFragment;
 import android.app.PendingIntent;
-import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -37,16 +33,13 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.DatePicker;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.google.gson.GsonBuilder;
@@ -64,7 +57,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -460,7 +452,6 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         }, 0L, 5L * 1000);
-
     }
 
     //Continuously check state of reach local server.
@@ -579,8 +570,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
             if (intent.getAction().equals(NfcAdapter.ACTION_TAG_DISCOVERED)) {
-                String nfcid = ByteArrayToHexString(intent.getByteArrayExtra(NfcAdapter.EXTRA_ID));
-                tag_id = nfcid;
+                tag_id = ByteArrayToHexString(intent.getByteArrayExtra(NfcAdapter.EXTRA_ID));
             }
             //Check if tag name is not empty
             if (tag_data != "" && tag_id != "") {

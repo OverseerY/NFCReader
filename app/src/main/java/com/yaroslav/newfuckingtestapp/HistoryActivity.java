@@ -2,9 +2,8 @@ package com.yaroslav.newfuckingtestapp;
 
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
-import android.app.TimePickerDialog;
+import android.app.ProgressDialog;
 import android.os.AsyncTask;
-import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.format.DateUtils;
@@ -17,9 +16,8 @@ import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.TimePicker;
-import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -31,7 +29,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -57,6 +54,8 @@ public class HistoryActivity extends AppCompatActivity {
     EditText dateToField;
 
     TextView test_history;
+
+    ProgressDialog progDailog;
 
     private boolean isInternetEnabled = false;
 
@@ -116,6 +115,7 @@ public class HistoryActivity extends AppCompatActivity {
     //#region Calendar
 
     public void onClickStartDate(View view) {
+
         setStartDate();
     }
 
@@ -128,7 +128,6 @@ public class HistoryActivity extends AppCompatActivity {
                 dateStart.get(Calendar.YEAR),
                 dateStart.get(Calendar.MONTH),
                 dateStart.get(Calendar.DAY_OF_MONTH));
-        //dpd.getDatePicker().setMinDate(dateStart.getTimeInMillis());
         dpd.getDatePicker().setMaxDate(todayDateTime);
         dpd.show();
     }
@@ -174,8 +173,7 @@ public class HistoryActivity extends AppCompatActivity {
         }
     };
 
-    public static Calendar setDefaultTime(/*Date date,*/ Calendar calendar) {
-        /*calendar.setTime(date);*/
+    public static Calendar setDefaultTime(Calendar calendar) {
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
@@ -239,14 +237,6 @@ public class HistoryActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
         switch (item.getItemId()) {
-            /*
-            case R.id.download_json:
-                tagItems.clear();
-                adapter.notifyDataSetChanged();
-                setNewUrl();
-                new ParseTask().execute();
-                return true;
-                */
             case R.id.history_day:
                 if (isInternetEnabled) {
                     tagItems.clear();
@@ -312,6 +302,19 @@ public class HistoryActivity extends AppCompatActivity {
         HttpURLConnection urlConnection = null;
         BufferedReader reader = null;
         String resultJson = "";
+        public ProgressBar dialog;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            /*ProgressDialog*/ progDailog = new ProgressDialog(HistoryActivity.this);
+            progDailog.setMessage(getString(R.string.progress_message));
+            progDailog.setIndeterminate(false);
+            progDailog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            progDailog.setCancelable(true);
+            progDailog.show();
+        }
 
         @Override
         protected String doInBackground(Void... params) {
@@ -335,7 +338,7 @@ public class HistoryActivity extends AppCompatActivity {
                 resultJson = buffer.toString();
             } catch (Exception e) {
                 Log.e("ParseTask", e.getLocalizedMessage());
-                Log.e("ParseTask_extended", e.getStackTrace().toString());
+                //Log.e("ParseTask_extended", e.getStackTrace().toString());
             }
             return resultJson;
         }
@@ -343,6 +346,8 @@ public class HistoryActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String strJson) {
             super.onPostExecute(strJson);
+
+            progDailog.dismiss();
 
             Log.d(LOG_TAG, strJson);
 
@@ -369,7 +374,7 @@ public class HistoryActivity extends AppCompatActivity {
 
             } catch (JSONException e) {
                 Log.e("onPostExecute", e.getLocalizedMessage());
-                Log.e("onPostExecute_extended", e.getStackTrace().toString());
+                //Log.e("onPostExecute_extended", e.getStackTrace().toString());
             }
         }
     }
