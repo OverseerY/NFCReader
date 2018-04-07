@@ -229,9 +229,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         if (ifPressedBackOnce) {
-            nfcAdapter.disableForegroundDispatch(this);
-            //Stop using geolocation
-            locationManager.removeUpdates(locationListener);
+            if (isNfcEnabled) {
+                nfcAdapter.disableForegroundDispatch(this);
+            }
+            if (isGpsEnabled) {
+                //Stop using geolocation
+                locationManager.removeUpdates(locationListener);
+            }
             //finishAffinity();
             finishAndRemoveTask();
             //finish();
@@ -332,30 +336,30 @@ public class MainActivity extends AppCompatActivity {
     //Initialization of NFC adapter (if exists)
     private boolean initNFC() {
         nfcManager = (NfcManager) this.getSystemService(Context.NFC_SERVICE);
-        isNfcEnabled = false;
+        boolean service_enabled = false;
         try {
             nfcAdapter = nfcManager.getDefaultAdapter();
             if (nfcAdapter != null && nfcAdapter.isEnabled()) {
-                isNfcEnabled = true;
+                service_enabled = true;
             }
         } catch (NullPointerException e) {
             Log.e("initNFC", e.getLocalizedMessage());
         }
-        return isNfcEnabled;
+        return service_enabled;
     }
 
     //Initialization of geolocation service
     private boolean initGPS() {
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        isGpsEnabled = false;
+        boolean service_enabled = false;
         try {
             if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                isGpsEnabled = true;
+                service_enabled = true;
             }
         } catch (NullPointerException e) {
             Log.e("initLocationManager", e.getLocalizedMessage());
         }
-        return isGpsEnabled;
+        return service_enabled;
     }
 
     //Continuously check state of Internet connection.
@@ -405,11 +409,11 @@ public class MainActivity extends AppCompatActivity {
                 if (initGPS()) {
                     result = getString(R.string.ok);
                     textColor = getResources().getColor(R.color.color_success);
-                    isNfcEnabled = true;
+                    isGpsEnabled = true;
                 } else {
                     result = getString(R.string.unavailable);
                     textColor = getResources().getColor(R.color.color_fail);
-                    isNfcEnabled = false;
+                    isGpsEnabled = false;
                 }
                 gpsHandler.post(new Runnable() {
                     @Override
