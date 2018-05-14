@@ -431,7 +431,7 @@ public class HistoryActivity extends AppCompatActivity {
                     isInternetEnabled = false;
                 }
             }
-        }, 0L, 5L * 1000);
+        }, 0L, 2L * 1000);
     }
 
     //Get URl as argument to check it's availability and return result

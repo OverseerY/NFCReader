@@ -131,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        enableWiFi();
         setContentView(R.layout.activity_main);
 
         //Restore parameters and flags after activity re-creation
@@ -391,7 +392,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
             }
-        }, 0L, 5L * 1000);
+        }, 0L, 2L * 1000);
     }
 
     //Continuously check state of geolocation adapter.
@@ -423,7 +424,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
             }
-        }, 0L, 5L * 1000);
+        }, 0L, 2L * 1000);
     }
 
     //Continuously check state of NFC adapter.
@@ -455,7 +456,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
             }
-        }, 0L, 5L * 1000);
+        }, 0L, 2L * 1000);
     }
 
     //Continuously check state of reach local server.
@@ -489,7 +490,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
             }
-        }, 0L, 10L * 1000);
+        }, 0L, 5L * 1000);
     }
 
     //Method receives management of NFC adapter
@@ -602,6 +603,8 @@ public class MainActivity extends AppCompatActivity {
                         addExtendedPoint(description, tagId, currentLatitude, currentLongitude, currentTime, UniqID);
                         //save in file
                         savePoints();
+                        //show notification about offline mode
+                        autoCloseDialog(getString(R.string.notification), getString(R.string.offline_notification));
 
                     }
                 //If location is null, show appropriate message in bottom of screen
@@ -1008,16 +1011,16 @@ public class MainActivity extends AppCompatActivity {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                statusInit();
+                //statusInit();
             }
         }, 2000);
     }
 
-    //Disable WiFi
-    private void disableWiFi() {
+    //Enable WiFi
+    private void enableWiFi() {
         WifiManager wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-        if (wifi.isWifiEnabled()) {
-            wifi.setWifiEnabled(false);
+        if (!wifi.isWifiEnabled()) {
+            wifi.setWifiEnabled(true);
         }
     }
 

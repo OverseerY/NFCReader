@@ -57,6 +57,7 @@
     <string name="history_week">Show for a week</string>
     <string name="history_month">Show for a month</string>
     <string name="on_press_back">Press BACK again to exit</string>
+    <string name="offline_notification">The tag was readed and saved succesfully but it will be send to server when a connection will appear</string>
     <string name="connection_lost">Unable to load data from server: connection is lost</string>
     <string name="progress_message">Loading...</string>
 </resources>
