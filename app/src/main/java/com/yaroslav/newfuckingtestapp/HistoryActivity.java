@@ -6,6 +6,11 @@ import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.DividerItemDecoration;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.text.format.DateFormat;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.Menu;
@@ -29,6 +34,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -43,9 +49,13 @@ import okhttp3.ResponseBody;
 
 public class HistoryActivity extends AppCompatActivity {
 
-    ArrayAdapter<Ticket> adapter;
-    List<Ticket> tagItems;
-    ListView listView;
+    private List<Tag> tagList = new ArrayList<>();
+    private RecyclerView recyclerView;
+    private TagsAdapter mAdapter;
+
+    //ArrayAdapter<Ticket> adapter;
+    //List<Ticket> tagItems;
+    //ListView listView;
 
     public static String LOG_TAG = "JsonLog";
 
@@ -76,6 +86,16 @@ public class HistoryActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_history);
 
+        recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+
+        mAdapter = new TagsAdapter(tagList);
+        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext());
+        recyclerView.setLayoutManager(mLayoutManager);
+        recyclerView.setItemAnimator(new DefaultItemAnimator());
+        recyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
+        recyclerView.setAdapter(mAdapter);
+
+
         if (savedInstanceState != null) {
             currentDateFromMillisec = savedInstanceState.getLong("currentDateFromMillisec");
             currentDateToMillisec = savedInstanceState.getLong("currentDateToMillisec");
@@ -93,13 +113,15 @@ public class HistoryActivity extends AppCompatActivity {
         dateFromField.setFocusable(false);
         dateToField.setFocusable(false);
 
-        test_history = (TextView) findViewById(R.id.test_history);
+        //test_history = (TextView) findViewById(R.id.test_history);
 
         //Array of scanned tags (object type Ticket)
+        /*
         tagItems = new ArrayList<>();
         listView = (ListView) findViewById(R.id.history_list);
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, tagItems);
         listView.setAdapter(adapter);
+        */
     }
 
     @Override
@@ -148,8 +170,10 @@ public class HistoryActivity extends AppCompatActivity {
             dateStart.set(Calendar.DAY_OF_MONTH, dayOfMonth);
             setInitialDateFrom();
 
-            tagItems.clear();
-            adapter.notifyDataSetChanged();
+            //tagItems.clear();
+            //adapter.notifyDataSetChanged();
+            tagList.clear();
+            mAdapter.notifyDataSetChanged();
             setNewUrl();
             new ParseTask().execute();
         }
@@ -164,8 +188,10 @@ public class HistoryActivity extends AppCompatActivity {
             setInitialDateTo();
 
             if (currentDateFromMillisec != 0) {
-                tagItems.clear();
-                adapter.notifyDataSetChanged();
+                //tagItems.clear();
+                //adapter.notifyDataSetChanged();
+                tagList.clear();
+                mAdapter.notifyDataSetChanged();
                 setNewUrl();
                 new ParseTask().execute();
             }
@@ -256,8 +282,10 @@ public class HistoryActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.history_day:
                 if (isInternetEnabled) {
-                    tagItems.clear();
-                    adapter.notifyDataSetChanged();
+                    //tagItems.clear();
+                    //adapter.notifyDataSetChanged();
+                    tagList.clear();
+                    mAdapter.notifyDataSetChanged();
                     getLastDay();
                     new ParseTask().execute();
                 } else {
@@ -266,8 +294,10 @@ public class HistoryActivity extends AppCompatActivity {
                 return true;
             case R.id.history_week:
                 if (isInternetEnabled) {
-                    tagItems.clear();
-                    adapter.notifyDataSetChanged();
+                    //tagItems.clear();
+                    //adapter.notifyDataSetChanged();
+                    tagList.clear();
+                    mAdapter.notifyDataSetChanged();
                     getLastWeek();
                     new ParseTask().execute();
                 } else {
@@ -276,8 +306,10 @@ public class HistoryActivity extends AppCompatActivity {
                 return true;
             case R.id.history_month:
                 if (isInternetEnabled) {
-                    tagItems.clear();
-                    adapter.notifyDataSetChanged();
+                    //tagItems.clear();
+                    //adapter.notifyDataSetChanged();
+                    tagList.clear();
+                    mAdapter.notifyDataSetChanged();
                     getLastMonth();
                     new ParseTask().execute();
                 } else {
@@ -384,9 +416,14 @@ public class HistoryActivity extends AppCompatActivity {
                     String lon = item.getString("Lng");
                     String time = item.getString("TimeMS");
 
-                    Ticket tagItem = new Ticket(description, cardId, lat, lon, time, uuid);
-                    tagItems.add(tagItem);
-                    adapter.notifyDataSetChanged();
+                    //Ticket tagItem = new Ticket(description, cardId, lat, lon, time, uuid);
+                    //tagItems.add(tagItem);
+                    //adapter.notifyDataSetChanged();
+
+
+                    Tag tag = new Tag(description, converteTime(time));
+                    tagList.add(tag);
+                    mAdapter.notifyDataSetChanged();
                 }
 
             } catch (JSONException e) {
@@ -462,6 +499,14 @@ public class HistoryActivity extends AppCompatActivity {
     }
 
     //#endregion
+
+    private String converteTime(String value) {
+        java.text.DateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+        long temp = Long.parseLong(value);
+        Date date = new Date(temp);
+        String formatted = format.format(date);
+        return formatted;
+    }
 }
 
 

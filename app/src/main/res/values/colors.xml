@@ -5,4 +5,6 @@
     <color name="colorAccent">#039be5</color>
     <color name="color_fail">#bf360c</color>
     <color name="color_success">#388e3c</color>
+    <color name="title">#222222</color>
+    <color name="date">#999999</color>
 </resources>

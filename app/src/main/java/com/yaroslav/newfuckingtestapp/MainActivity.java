@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+//import android.graphics.PixelFormat;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -33,10 +34,15 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+//import android.view.Gravity;
+//import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+//import android.view.MotionEvent;
 import android.view.View;
+//import android.view.ViewGroup;
+//import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -200,11 +206,15 @@ public class MainActivity extends AppCompatActivity {
         if (!isFileChecked) {
             tryToSendFile();
         }
+
+        adapter.notifyDataSetChanged();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+
+        adapter.notifyDataSetChanged();
 
         //Methods run continuously for tracing
         //changes of sensors states or flags.
@@ -276,7 +286,6 @@ public class MainActivity extends AppCompatActivity {
 
         super.onSaveInstanceState(onSavedInstanceState);
     }
-
 
     //#endregion
 
@@ -354,7 +363,7 @@ public class MainActivity extends AppCompatActivity {
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         boolean service_enabled = false;
         try {
-            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
                 service_enabled = true;
             }
         } catch (NullPointerException e) {
@@ -593,6 +602,7 @@ public class MainActivity extends AppCompatActivity {
                         addExtendedPoint(description, tagId, currentLatitude, currentLongitude, currentTime, UniqID);
                         //..and send to server
                         new UploadJsonTask().execute();
+                        autoCloseDialog(tag_data, getString(R.string.tag_success));
                     //otherwise save tag in file
                     } else {
                         if (isFileChecked) {
@@ -612,7 +622,7 @@ public class MainActivity extends AppCompatActivity {
                     customSnackbar(getString(R.string.location_is_null), getString(R.string.ok));
                 }
                 //Anyway tag was red, so show window about it.
-                autoCloseDialog(tag_data, getString(R.string.tag_success));
+                //autoCloseDialog(tag_data, getString(R.string.tag_success));
             //otherwise use another technology and read tag UID
             } else {
                 //Show dialog window about failure if tag can not be red at all.
@@ -976,12 +986,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //Use this method if need to convert time gotten from locationListener
+    /*
     private String converteTime(long value) {
         DateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
         Date date = new Date(value);
         String formatted = format.format(date);
         return formatted;
     }
+    */
 
     //Generate UUID
     private String getUniqueUserID() {
