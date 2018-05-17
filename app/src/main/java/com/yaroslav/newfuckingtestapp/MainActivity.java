@@ -33,6 +33,10 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.DividerItemDecoration;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 //import android.view.Gravity;
 //import android.view.KeyEvent;
@@ -77,6 +81,11 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 public class MainActivity extends AppCompatActivity {
+
+    private List<Ticket> ticketList = new ArrayList<>();
+    private RecyclerView recyclerView;
+    private TicketsAdapter mAdapter;
+
     private static final String TAG = "TEST";
 
     private static final int LOCATION_INTERVAL = 1000; // 1 sec
@@ -114,10 +123,12 @@ public class MainActivity extends AppCompatActivity {
     NfcManager nfcManager;
     NfcAdapter nfcAdapter;
 
-    ArrayAdapter<Ticket> adapter;
+
+    //ArrayAdapter<Ticket> adapter;
     List<Ticket> points;
     List<Ticket> temp_points;
     ListView listView;
+
 
     //Different types of NFC technology
     private final String[][] techList = new String[][] {
@@ -139,6 +150,15 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         enableWiFi();
         setContentView(R.layout.activity_main);
+
+        recyclerView = (RecyclerView) findViewById(R.id.recycler_view_main);
+
+        mAdapter = new TicketsAdapter(ticketList);
+        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext());
+        recyclerView.setLayoutManager(mLayoutManager);
+        recyclerView.setItemAnimator(new DefaultItemAnimator());
+        recyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
+        recyclerView.setAdapter(mAdapter);
 
         //Restore parameters and flags after activity re-creation
         if (savedInstanceState != null) {
@@ -190,9 +210,9 @@ public class MainActivity extends AppCompatActivity {
         //Using for storage tags saved to file and restored for send
         temp_points = new ArrayList<>();
 
-        listView = (ListView) findViewById(R.id.list);
-        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, points);
-        listView.setAdapter(adapter);
+        //listView = (ListView) findViewById(R.id.list);
+        //adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, points);
+        //listView.setAdapter(adapter);
 
         //simply get UUID
         if (UniqID == null) {
@@ -207,14 +227,14 @@ public class MainActivity extends AppCompatActivity {
             tryToSendFile();
         }
 
-        adapter.notifyDataSetChanged();
+        //adapter.notifyDataSetChanged();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        adapter.notifyDataSetChanged();
+        //adapter.notifyDataSetChanged();
 
         //Methods run continuously for tracing
         //changes of sensors states or flags.
@@ -600,6 +620,7 @@ public class MainActivity extends AppCompatActivity {
                     if (isInternetEnabled && isServerAvailable) {
                         //add tag with full information to array..
                         addExtendedPoint(description, tagId, currentLatitude, currentLongitude, currentTime, UniqID);
+                        addPointToList(description, converteTime(currentTime));
                         //..and send to server
                         new UploadJsonTask().execute();
                         autoCloseDialog(tag_data, getString(R.string.tag_success));
@@ -611,6 +632,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                         //add tag to array
                         addExtendedPoint(description, tagId, currentLatitude, currentLongitude, currentTime, UniqID);
+                        addPointToList(description, converteTime(currentTime));
                         //save in file
                         savePoints();
                         //show notification about offline mode
@@ -911,7 +933,13 @@ public class MainActivity extends AppCompatActivity {
     private void addExtendedPoint(String name, String tid, String latit, String longit, String time, String uuid) {
         Ticket point = new Ticket(name, tid, latit, longit, time, uuid);
         points.add(point);
-        adapter.notifyDataSetChanged();
+        //adapter.notifyDataSetChanged();
+    }
+
+    private void addPointToList(String name, String time) {
+        Ticket t = new Ticket(name, time);
+        ticketList.add(t);
+        mAdapter.notifyDataSetChanged();
     }
 
     private void savePoints() {
@@ -929,7 +957,7 @@ public class MainActivity extends AppCompatActivity {
                 points.addAll(temp_points);
                 //points = temp_points;
                 temp_points.clear();
-                adapter.notifyDataSetChanged();
+                //adapter.notifyDataSetChanged();
             } else {
                 Snackbar.make(findViewById(android.R.id.content), getString(R.string.restore_failed), Snackbar.LENGTH_SHORT);
                 //customSnackbar(getString(R.string.restore_failed), getString(R.string.ok));
@@ -944,7 +972,7 @@ public class MainActivity extends AppCompatActivity {
             boolean result = JSONHelper.deleteThisFuckingFile(this);
             if (result) {
                 points.clear();
-                adapter.notifyDataSetChanged();
+                //adapter.notifyDataSetChanged();
                 customSnackbar(getString(R.string.file_deleted), getString(R.string.ok));
             } else {
                 customSnackbar(getString(R.string.file_did_not_deleted), getString(R.string.ok));
@@ -986,14 +1014,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //Use this method if need to convert time gotten from locationListener
-    /*
-    private String converteTime(long value) {
+    private String converteTime(String value) {
         DateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-        Date date = new Date(value);
+        long temp = Long.parseLong(value);
+        Date date = new Date(temp);
         String formatted = format.format(date);
         return formatted;
     }
-    */
 
     //Generate UUID
     private String getUniqueUserID() {
@@ -1010,7 +1037,7 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 if (isInternetEnabled && isServerAvailable && !isFileChecked ) {
                     checkFileExistance();
-                    adapter.notifyDataSetChanged();
+                    //adapter.notifyDataSetChanged();
                 }
             }
         }, 0L, 10L * 1000);

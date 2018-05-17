@@ -24,6 +24,11 @@ public class Ticket implements Serializable{
         this.mUid = uuid;
     }
 
+    public Ticket(String description, String time) {
+        this.mDescription = description;
+        this.mTime = time;
+    }
+
     @Override
     public String toString() {
         return mDescription + "; " + converteTime(Long.parseLong(mTime));
