@@ -29,7 +29,7 @@
     <string name="file_did_not_deleted">Failed to delete file</string>
     <string name="nfc_notification">Unable to read tag. NFC adapter is not reachable</string>
     <string name="tag_success">Tag was read successfully!</string>
-    <string name="tag_sent">Tags was succesfully uploaded to server</string>
+    <string name="tag_sent">Tags was successfully uploaded to server</string>
     <string name="tag_failure">Tag was not recognised. Try again</string>
     <string name="tag_unknown">Tag name is unknown. Try again or skip it</string>
     <string name="nfc_disabled">NFC adapter is disabled or does not exist. Please, check settings and try again</string>
@@ -57,7 +57,7 @@
     <string name="history_week">Show for a week</string>
     <string name="history_month">Show for a month</string>
     <string name="on_press_back">Press BACK again to exit</string>
-    <string name="offline_notification">The tag was readed and saved succesfully but it will be send to server when a connection will appear</string>
+    <string name="offline_notification">The tag was read and saved successfully but it will be send to server when a connection will appear</string>
     <string name="connection_lost">Unable to load data from server: connection is lost</string>
     <string name="progress_message">Loading...</string>
 </resources>

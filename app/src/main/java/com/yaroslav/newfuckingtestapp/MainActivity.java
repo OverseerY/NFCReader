@@ -47,7 +47,7 @@ import android.view.MenuItem;
 import android.view.View;
 //import android.view.ViewGroup;
 //import android.view.WindowManager;
-import android.widget.ArrayAdapter;
+//import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -127,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
     //ArrayAdapter<Ticket> adapter;
     List<Ticket> points;
     List<Ticket> temp_points;
-    ListView listView;
+    //ListView listView;
 
 
     //Different types of NFC technology
@@ -916,7 +916,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //Use this method for uploading from file
-    private class UploadOldJsonTask extends AsyncTask<Ticket, Integer, String>{
+    private static class UploadOldJsonTask extends AsyncTask<Ticket, Integer, String>{
         @Override
         protected String doInBackground(Ticket... urls) {
             executeJsonFromObject(urls[0]);

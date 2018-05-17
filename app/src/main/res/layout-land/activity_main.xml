@@ -26,8 +26,7 @@
             android:id="@+id/nfc_stat"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:text="Test"/>
+            android:layout_weight="1" />
 
         <TextView
             android:id="@+id/gps"
@@ -41,8 +40,7 @@
             android:id="@+id/gps_stat"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:text="Test"/>
+            android:layout_weight="1" />
 
         <TextView
             android:id="@+id/net"
@@ -56,8 +54,7 @@
             android:id="@+id/net_stat"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:text="Test"/>
+            android:layout_weight="1" />
 
         <TextView
             android:id="@+id/srv"
@@ -71,14 +68,21 @@
             android:id="@+id/srv_stat"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:text="Test"/>
+            android:layout_weight="1" />
 
     </LinearLayout>
 
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recycler_view_main"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="vertical" />
+    <!--
     <ListView
         android:id="@+id/list"
         android:layout_width="wrap_content"
         android:layout_height="match_parent" />
+    -->
 
 </LinearLayout>
